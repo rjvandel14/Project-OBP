@@ -10,3 +10,37 @@
 # Displays results (rankings, costs, and savings) fetched from dss.py.
 # With Data Files:
 # Allows users to import/export customer datasets or ranked results in CSV format.
+
+
+import streamlit as st
+from dss import calculate_collaboration, load_data
+
+# Title
+st.title("Logistics Collaboration Dashboard")
+
+vehicle_capacity = st.sidebar.number_input("Vehicle Capacity", min_value=1, value=10)
+cost_per_km = st.sidebar.number_input("Cost per KM (€)", min_value=0.0, value=2.5, format="%.2f")
+fixed_cost_per_truck = st.sidebar.number_input("Fixed Cost per Truck (€)", min_value=0.0, value=50.0, format="%.2f")
+
+data = load_data('../Data/mini.csv')
+unique_companies = data['name'].unique()
+
+# Dropdowns for company selection
+company_a = st.selectbox("Select Company A", unique_companies)
+company_b = st.selectbox("Select Company B", unique_companies)
+
+# Button to trigger analysis
+if st.button("Analyze Collaboration"):
+    if company_a == company_b:
+        st.error("Please select two different companies.")
+    else:
+        # Call the backend function
+        results = calculate_collaboration(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, company_b)
+
+        # Display the results
+        st.subheader("Analysis Results")
+        st.write(f"Cost for {company_a}: {results['cost_a']}")
+        st.write(f"Cost for {company_b}: {results['cost_b']}")
+        st.write(f"Cost for collaboration: {results['collaboration_cost']}")
+        st.write(f"Total savings: {results['savings']}")
+
