@@ -35,3 +35,4 @@ def calculate_collaboration(vehicle_capacity, cost_per_km, fixed_cost, company_a
         "savings": round(savings, 2),
     }
     return results
+
