@@ -1,0 +1,6 @@
+# Is used to list all the Python libraries that the project needs
+
+numpy
+pandas
+haversine
+streamlit
