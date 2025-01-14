@@ -4,3 +4,4 @@ numpy
 pandas
 haversine
 streamlit
+dash
