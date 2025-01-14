@@ -33,7 +33,7 @@ ranking_data = get_mock_ranking()
 
 # Display the full ranked list
 st.subheader("Full Ranked List of Collaborations")
-st.dataframe(ranking_data)
+st.dataframe(ranking_data.head(10), hide_index=True)
 
 # Dropdowns for company selection
 # Add placeholders to the company list

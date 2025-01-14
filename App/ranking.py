@@ -18,9 +18,12 @@ def get_mock_ranking():
     Returns a mock ranking table for collaborations.
     """
     mock_data = pd.DataFrame({
-        "Rank": [1, 2, 3],
-        "Company A": ["Company 1", "Company 2", "Company 3"],
-        "Company B": ["Company 4", "Company 5", "Company 6"],
-        "Savings (€)": [250.00, 200.50, 150.75]
+    "Rank": [1, 2, 3],
+    "Company A": ["Company 1", "Company 2", "Company 3"],
+    "Company B": ["Company 4", "Company 5", "Company 6"],
+    "Savings Company A (€)": [100.00, 80.50, 70.00],  # Example savings for Company A
+    "Savings Company B (€)": [150.00, 120.00, 80.75],  # Example savings for Company B
+    "Savings (€)": [250.00, 200.50, 150.75]  # Total savings
     })
+
     return mock_data
