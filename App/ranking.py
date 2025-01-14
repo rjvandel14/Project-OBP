@@ -17,9 +17,6 @@ from dss import load_data
 
 df = load_data('../Data/mini.csv')
 
-def bla():
-    print("bla")
-
 def get_mock_ranking():
     """
     Returns a mock ranking table for collaborations.
@@ -35,43 +32,56 @@ def get_mock_ranking():
 
     return mock_data
 
-# # Example: Replace this with your actual file path
-# file_path = r'C:\Users\daydo\Downloads\mini.csv'
+# Visualize the customer locations given a company
+def create_partnership_map(df, depot_lat, depot_lon, output_file='map.html'):
+    """
+    Create an interactive map showing company customer locations and depot.
 
-# # Load the CSV file
-# df = pd.read_csv(file_path)
+    Parameters:
+    - df (pd.DataFrame): DataFrame containing customer data with columns ['latitude', 'longitude', 'name'].
+    - depot_lat (float): Latitude of the depot.
+    - depot_lon (float): Longitude of the depot.
+    - output_file (str): Name of the HTML file to save the map.
 
-# Coordinates of the depot
-# !! Are in the distance matrix, so for later, needs change
+    Returns:
+    - folium.Map: The interactive Folium map object.
+    """
+    # Create a Folium map centered at the depot
+    m = folium.Map(location=[depot_lat, depot_lon], zoom_start=12)
+
+    # Add the depot marker
+    folium.Marker(
+        location=[depot_lat, depot_lon],
+        popup="Depot",
+        icon=folium.Icon(color="red", icon="info-sign")
+    ).add_to(m)
+
+    # Assign a unique color for each company
+    company_names = df['name'].unique()  # Use the 'name' column to identify companies
+    colors = ['blue', 'green', 'purple', 'orange', 'darkred', 'darkblue', 'cadetblue', 'lightgreen']  # Add more if needed
+    color_map = {name: colors[i % len(colors)] for i, name in enumerate(company_names)}
+
+    # Add customer markers for each company
+    for _, row in df.iterrows():
+        folium.Marker(
+            location=[row['latitude'], row['longitude']],
+            popup=f"Customer of {row['name']}",  # Display company name in the popup
+            icon=folium.Icon(color=color_map[row['name']])
+        ).add_to(m)
+
+    # Save the map to an HTML file
+    m.save(output_file)
+
+    # Streamlit output
+    st.title("Partnership Map")
+    st.write("Interactive map showing company customers and depot.")
+    st.components.v1.html(m._repr_html_(), height=600)
+
+    return m
+
+# Depot coordinates
 depot_lat = 52.16521
 depot_lon = 5.17215
+create_partnership_map(df, depot_lat, depot_lon, output_file='partnership_map.html')
 
-# Create a Folium map centered at the depot
-m = folium.Map(location=[depot_lat, depot_lon], zoom_start=12)
 
-# Add the depot marker
-folium.Marker(
-    location=[depot_lat, depot_lon],
-    popup="Depot",
-    icon=folium.Icon(color="red", icon="info-sign")
-).add_to(m)
-
-# Assign a unique color for each company
-names = df['name'].unique()  # Use the 'name' column instead of 'company'
-colors = ['blue', 'green', 'purple', 'orange', 'darkred', 'darkblue']  # Extend as needed
-color_map = {name: colors[i % len(colors)] for i, name in enumerate(names)}
-
-# Add customer markers for each company
-for _, row in df.iterrows():
-    folium.Marker(
-        location=[row['latitude'], row['longitude']],
-        popup=f"Customer of {row['name']}",  # Updated to use 'name'
-        icon=folium.Icon(color=color_map[row['name']])
-    ).add_to(m)
-# Save the map to an HTML file
-m.save('map.html')
-st.write("Map saved as `map.html`. Open it in a browser to view the map.")
-
-st.title("Partnership Map")
-st.write("Interactive map showing company customers and depot.")
-st.components.v1.html(m._repr_html_(), height=600)
