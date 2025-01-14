@@ -13,7 +13,7 @@
 
 
 import streamlit as st
-from dss import calculate_collaboration, load_data
+from dss import load_data
 from dash import Dash, html
 from ranking import get_mock_ranking
 from routing import mock_cvrp
