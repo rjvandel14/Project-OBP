@@ -15,8 +15,9 @@
 import streamlit as st
 from dss import load_data
 from dash import Dash, html
-from ranking import get_mock_ranking
+from ranking import get_mock_ranking, get_min_max_ranking
 from routing import mock_cvrp
+from distancematrix import distance_matrix
 
 # Title
 st.title("Logistics Collaboration Dashboard")
@@ -30,7 +31,9 @@ data = load_data('../Data/mini.csv')
 unique_companies = data['name'].unique()
 
 # Fetch ranking data
-ranking_data = get_mock_ranking()
+#ranking_data = get_mock_ranking()
+dmatrix = distance_matrix()
+ranking_data = get_min_max_ranking(dmatrix, data)
 
 # Display the top  10 ranked list -->
 st.subheader("Full Ranked List of Collaborations")
