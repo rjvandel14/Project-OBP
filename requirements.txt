@@ -6,5 +6,5 @@ haversine
 streamlit
 seaborn
 matplotlib
-
 dash
+folium
