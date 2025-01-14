@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 from dss import load_data
 df = load_data('../Data/mini.csv')
 
-print(df.head())
+print(df.info())  # Inspect for NaN values
+print(df.head())  # Check the first few rows
 
 def haversine(lat1, lon1, lat2, lon2):
     print(lat1)
@@ -35,7 +36,7 @@ df = pd.concat([depot_row, df], ignore_index=True)
 full_distance_matrix = []
 
 # Bereken de afstanden tussen het depot en alle klanten (inclusief depot zelf)
-coordinates = df[['lat', 'lon']].values  # Nu bevat de lijst ook het depot als eerste element
+coordinates = df[['latitude', 'longitude']].values
 
 # Bereken de afstand van het depot naar elke klant en tussen klanten onderling
 for i in range(len(coordinates)):
