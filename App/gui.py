@@ -16,6 +16,7 @@ import streamlit as st
 from dss import calculate_collaboration, load_data
 from dash import Dash, html
 from ranking import get_mock_ranking
+from routing import mock_cvrp
 
 # Title
 st.title("Logistics Collaboration Dashboard")
@@ -31,7 +32,7 @@ unique_companies = data['name'].unique()
 # Fetch ranking data
 ranking_data = get_mock_ranking()
 
-# Display the full ranked list
+# Display the top  10 ranked list -->
 st.subheader("Full Ranked List of Collaborations")
 st.dataframe(ranking_data)
 
@@ -51,12 +52,17 @@ if st.button("Analyze Collaboration"):
         st.error("Please select two different companies.")
     else:
         # Call the backend function
-        results = calculate_collaboration(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, company_b)
+        results = mock_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck)
+        cost_a = results["Cost (€)"][0]
+        cost_b = results["Cost (€)"][1]
+        cost_collab = results["Cost (€)"][2]
 
         # Display the results
         st.subheader("Analysis Results")
-        st.write(f"Cost for {company_a}: {results['cost_a']}")
-        st.write(f"Cost for {company_b}: {results['cost_b']}")
-        st.write(f"Cost for collaboration: {results['collaboration_cost']}")
-        st.write(f"Total savings: {results['savings']}")
+        st.write(f"Cost for {company_a}: {cost_a}")
+        st.write(f"Cost for {company_b}: {cost_b}")
+        st.write(f"Cost for collaboration: {cost_collab}")
+        st.write(f"Total savings: {cost_a + cost_b - cost_collab}")
+
+
 
