@@ -62,7 +62,7 @@ def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distanc
 
     return vrp.best_value, vrp.best_routes
 
-def all_crvp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, company_b, data = df):
+def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, company_b, data = df):
      # Define companies to collaborate
     collaborating_companies = (company_a, company_b)
 
