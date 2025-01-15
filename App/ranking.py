@@ -100,8 +100,6 @@ def get_min_max_ranking(dmatrix, df):
     for i, company1 in enumerate(company_names):
         for j, company2 in enumerate(company_names):
             if i < j:  # Ensure each pair is only processed once
-                # Log the partnership being evaluated
-                print(f"Evaluating partnership: {company1} and {company2}")
 
                 # Get customer indices for both companies
                 customers1 = df[df['name'] == company1].index.tolist()
@@ -141,7 +139,3 @@ def get_min_max_ranking(dmatrix, df):
 
 dmatrix = distance_matrix()
 ranking = get_min_max_ranking(dmatrix, df)
-# Set pandas to display all columns
-pd.set_option('display.max_columns', None)
-pd.set_option('display.max_rows', None)
-print(ranking)
