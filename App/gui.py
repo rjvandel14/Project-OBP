@@ -17,7 +17,6 @@ from gui_components.gui_ranking import render_ranking
 from gui_components.gui_analysis import render_analysis
 from distancematrix import distance_matrix
 
-
 # Title
 st.title("Logistics Collaboration Dashboard")
 
@@ -31,4 +30,4 @@ if data is not None:
     ranking_data = render_ranking(dmatrix, data)
 
     # Analyze collaboration
-    render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, ranking_data)
+    render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, dmatrix)
