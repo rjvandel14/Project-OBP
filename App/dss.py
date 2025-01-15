@@ -11,7 +11,13 @@
 
 import pandas as pd
 
+#variables
+depot_lat = 52.16521
+depot_lon = 5.17215
+
 def load_data(file_path):
     # Load data and return it
     data = pd.read_csv(file_path, skiprows=1, names=["name", "latitude", "longitude"])
     return data
+
+df = load_data('../Data/mini.csv')

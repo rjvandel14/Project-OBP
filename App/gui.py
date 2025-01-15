@@ -11,58 +11,21 @@
 # With Data Files:
 # Allows users to import/export customer datasets or ranked results in CSV format.
 
-
 import streamlit as st
-from dss import load_data
-from dash import Dash, html
-from ranking import get_mock_ranking
-from routing import mock_cvrp
+from gui_components.gui_sidebar import render_sidebar
+from gui_components.gui_ranking import render_ranking
+from gui_components.gui_analysis import render_analysis
+
 
 # Title
 st.title("Logistics Collaboration Dashboard")
 
-# Sidebar inputs
-vehicle_capacity = st.sidebar.number_input("Vehicle Capacity", min_value=1, value=10)
-cost_per_km = st.sidebar.number_input("Cost per KM (€)", min_value=0.0, value=2.5, format="%.2f")
-fixed_cost_per_truck = st.sidebar.number_input("Fixed Cost per Truck (€)", min_value=0.0, value=50.0, format="%.2f")
+# Sidebar inputs and dataset
+vehicle_capacity, cost_per_km, fixed_cost_per_truck, data = render_sidebar()
 
-data = load_data('../Data/mini.csv')
-unique_companies = data['name'].unique()
+# Display rankings
+if data is not None:
+    ranking_data = render_ranking(data)
 
-# Fetch ranking data
-ranking_data = get_mock_ranking()
-
-# Display the top  10 ranked list -->
-st.subheader("Full Ranked List of Collaborations")
-st.dataframe(ranking_data.head(10), hide_index=True)
-
-# Dropdowns for company selection
-# Add placeholders to the company list
-placeholder_companies = ["Select a company", *unique_companies]
-
-st.subheader("Select Companies for Detailed Analysis")
-company_a = st.selectbox("Select Company A", placeholder_companies,index=0)
-company_b = st.selectbox("Select Company B", placeholder_companies,index=0)
-
-# Button to trigger analysis
-if st.button("Analyze Collaboration"):
-    if company_a == "Select a company" or company_b == "Select a company":
-        st.error("Please select valid companies for both dropdowns.")
-    elif company_a == company_b:
-        st.error("Please select two different companies.")
-    else:
-        # Call the backend function
-        results = mock_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck)
-        cost_a = results["Cost (€)"][0]
-        cost_b = results["Cost (€)"][1]
-        cost_collab = results["Cost (€)"][2]
-
-        # Display the results
-        st.subheader("Analysis Results")
-        st.write(f"Cost for {company_a}: {cost_a}")
-        st.write(f"Cost for {company_b}: {cost_b}")
-        st.write(f"Cost for collaboration: {cost_collab}")
-        st.write(f"Total savings: {cost_a + cost_b - cost_collab}")
-
-
-
+    # Analyze collaboration
+    render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, ranking_data)
