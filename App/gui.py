@@ -17,7 +17,7 @@ from dss import df
 from dash import Dash, html
 from ranking import get_mock_ranking, get_min_max_ranking
 from routing import mock_cvrp
-from distancematrix import distance_matrix
+from distancematrix import dmatrix
 
 # Title
 st.title("Logistics Collaboration Dashboard")
@@ -31,10 +31,9 @@ unique_companies = df['name'].unique()
 
 # Fetch ranking data
 #ranking_data = get_mock_ranking()
-dmatrix = distance_matrix()
 ranking_data = get_min_max_ranking(dmatrix, df)
 
-# Display the top  10 ranked list -->
+# Display the top  10 ranked list
 st.subheader("Full Ranked List of Collaborations")
 st.dataframe(ranking_data.head(10), hide_index=True)
 

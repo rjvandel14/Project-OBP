@@ -14,7 +14,7 @@ import folium
 import pandas as pd
 import streamlit as st
 from dss import df
-from distancematrix import distance_matrix
+from distancematrix import dmatrix
 
 def get_mock_ranking():
     """
@@ -136,8 +136,6 @@ def get_min_max_ranking(dmatrix, df):
     # Reorder columns for clarity
     return partnership_df[['Rank', 'Company A', 'Company B']]
 
-
-dmatrix = distance_matrix()
 ranking = get_min_max_ranking(dmatrix, df)
 # Set pandas to display all columns
 pd.set_option('display.max_columns', None)

@@ -66,5 +66,5 @@ def plot_heat_dist(distance_matrix):
     plt.tight_layout()  # Zorgt ervoor dat alles netjes past
     plt.show()
 
-matrix = distance_matrix()
-plot_heat_dist(matrix)
+dmatrix = distance_matrix()
+plot_heat_dist(dmatrix)
