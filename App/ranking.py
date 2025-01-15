@@ -13,8 +13,8 @@
 import folium
 import pandas as pd
 import streamlit as st
-from dss import df
-from distancematrix import dmatrix
+# from dss import df
+# from distancematrix import dmatrix
 from ranking_functions.ranking_minmax import get_min_max_ranking
 
 def get_mock_ranking():

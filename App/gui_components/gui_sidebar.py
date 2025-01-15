@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+from dss import load_data
 
 data_files = {
     "Mini Dataset": "../Data/mini.csv",
@@ -27,6 +28,7 @@ def render_sidebar():
     # Handle file upload or dataset selection
     if uploaded_file is not None:
         st.session_state.uploaded_file = uploaded_file
+        data = pd.read_csv(uploaded_file)
     else:
         st.session_state.uploaded_file = None
         st.session_state.selected_file = st.sidebar.selectbox(
@@ -34,22 +36,24 @@ def render_sidebar():
             options=list(data_files.keys()),
             index=list(data_files.keys()).index(st.session_state.selected_file)
         )
+        data = pd.read_csv(data_files[st.session_state.selected_file])
 
     # Load the data
-    data = None
-    if st.session_state.uploaded_file is not None:
-        try:
-            data = pd.read_csv(st.session_state.uploaded_file)
-            if data.empty:
-                st.error("The uploaded file is empty. Please upload a valid CSV file.")
-            elif not all(col in data.columns for col in ["name", "lat", "lon"]):
-                st.error("The file must contain the following columns: name, lat, lon.")
-        except Exception as e:
-            st.error(f"Error loading the uploaded file: {e}")
-    elif st.session_state.selected_file:
-        try:
-            data = pd.read_csv(data_files[st.session_state.selected_file])
-        except Exception as e:
-            st.sidebar.error(f"Error loading predefined file: {e}")
+    data = load_data(data=data)
+
+    # if st.session_state.uploaded_file is not None:
+    #     try:
+    #         data = pd.read_csv(st.session_state.uploaded_file)
+    #         if data.empty:
+    #             st.error("The uploaded file is empty. Please upload a valid CSV file.")
+    #         elif not all(col in data.columns for col in ["name", "lat", "lon"]):
+    #             st.error("The file must contain the following columns: name, lat, lon.")
+    #     except Exception as e:
+    #         st.error(f"Error loading the uploaded file: {e}")
+    # elif st.session_state.selected_file:
+    #     try:
+    #         data = pd.read_csv(data_files[st.session_state.selected_file])
+    #     except Exception as e:
+    #         st.sidebar.error(f"Error loading predefined file: {e}")
 
     return vehicle_capacity, cost_per_km, fixed_cost_per_truck, data

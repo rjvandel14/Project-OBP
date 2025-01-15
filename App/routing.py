@@ -18,11 +18,9 @@ from vrpy import VehicleRoutingProblem
 import networkx as nx
 import folium
 
-from dss import df
 from dss import depot_lat
 from dss import depot_lon
 
-from distancematrix import dmatrix 
     
 # Function to solve VRP for a given dataset
 def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distance_matrix):
@@ -62,7 +60,7 @@ def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distanc
 
     return vrp.best_value, vrp.best_routes
 
-def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, company_b, data = df):
+def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, company_b, data, dmatrix):
      # Define companies to collaborate
     collaborating_companies = (company_a, company_b)
 
