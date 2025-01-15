@@ -37,55 +37,77 @@ data_files = {
     "Largest Dataset": "../Data/manyLarge.csv"
 }
 
-# Add to the sidebar
+# Define required columns for validation
+required_columns = ["name", "lat", "lon"]
+
+# List of predefined data files
+data_files = {
+    "Mini Dataset": "../Data/mini.csv",
+    "Medium Dataset": "../Data/medium.csv",
+    "Large Dataset": "../Data/many.csv",
+    "Largest Dataset": "../Data/manyLarge.csv"
+}
+
+# Define required columns for validation
+required_columns = ["name", "lat", "lon"]
+
+# Initialize session state for dataset management
+if "selected_file" not in st.session_state:
+    st.session_state.selected_file = "Mini Dataset"  # Default to Mini Dataset
+if "uploaded_file" not in st.session_state:
+    st.session_state.uploaded_file = None
+
+# Sidebar for dataset selection
 st.sidebar.title("Dataset Selection")
 
-# Dropdown to select a predefined dataset (default: Mini Dataset)
-selected_file = st.sidebar.selectbox(
-    "Select a predefined dataset",
-    options=list(data_files.keys()),
-    index=0  # Default to the first dataset (Mini Dataset)
-)
-
 # File uploader for custom input
-uploaded_file = st.sidebar.file_uploader("Or upload your own CSV file", type=["csv"])
+uploaded_file = st.sidebar.file_uploader("Upload your CSV file", type=["csv"])
 
-# Reset button in the sidebar
-if st.sidebar.button("Reset"):
-    st.experimental_rerun()
+# Handle file upload
+if uploaded_file is not None:
+    st.session_state.uploaded_file = uploaded_file  # Save the uploaded file in session state
+else:
+    # If no uploaded file exists, reset to default predefined dataset
+    st.session_state.uploaded_file = None
+    st.session_state.selected_file = "Mini Dataset"
+
+# Show dropdown for predefined datasets only if no file is uploaded
+if st.session_state.uploaded_file is None:
+    st.session_state.selected_file = st.sidebar.selectbox(
+        "Select a predefined dataset",
+        options=list(data_files.keys()),
+        index=list(data_files.keys()).index(st.session_state.selected_file)
+    )
 
 # Load the selected or uploaded file
 data = None  # Initialize the data variable
 
-required_columns = ["name", "latitude", "longitude"]
-if uploaded_file is not None:
-    # Load the uploaded file
+if st.session_state.uploaded_file is not None:
     try:
-        data = pd.read_csv(uploaded_file)
-        # Validate the columns
-        if not all(col in data.columns for col in required_columns):
-            st.sidebar.error(f"Uploaded file must contain the following columns: {', '.join(required_columns)}")
-            data = None  # Clear data if validation fails
+        # Load the uploaded file
+        data = pd.read_csv(st.session_state.uploaded_file)
+
+        # Validate the content
+        if data.empty:
+            st.error("The uploaded file is empty. Please upload a valid CSV file.")
+        elif not all(col in data.columns for col in ["name", "lat", "lon"]):
+            st.error("The file must contain the following columns: name, lat, lon.")
         else:
-            st.sidebar.success("Custom file loaded and validated successfully!")
+            # Proceed silently on success
+            pass
+    except pd.errors.EmptyDataError:
+        st.error("The uploaded file has no data or valid columns.")
     except Exception as e:
-        st.error(f"Error loading file: {e}")
-elif selected_file:
-    # Load the selected predefined file
+        st.error(f"An error occurred while loading the file: {e}")
+elif st.session_state.selected_file:
     try:
-        data = pd.read_csv(data_files[selected_file])
-        st.sidebar.success(f"Predefined file '{selected_file}' loaded successfully!")
+        # Load the selected predefined file
+        data = pd.read_csv(data_files[st.session_state.selected_file])
     except Exception as e:
         st.sidebar.error(f"Error loading predefined file: {e}")
 else:
     st.sidebar.error("Please select or upload a file to proceed.")
 
-# # Display the data if it has been successfully loaded
-# if data is not None:
-#     st.write("### Preview of the Loaded Dataset")
-#     st.dataframe(data.head())
-
-data = load_data('../Data/mini.csv')
 unique_companies = data['name'].unique()
 
 # Fetch ranking data
