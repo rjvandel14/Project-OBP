@@ -1,10 +1,11 @@
 import streamlit as st
+import pandas as pd
 from routing import mock_cvrp
 
 def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, ranking_data):
     """Handles company selection and performs collaboration analysis."""
     # Dropdowns for company selection
-    unique_companies = ranking_data["Company A"].unique()
+    unique_companies = pd.concat([ranking_data["Company A"], ranking_data["Company B"]]).unique()
     placeholder_companies = ["Select a company", *unique_companies]
 
     st.subheader("Select Companies for Detailed Analysis")
