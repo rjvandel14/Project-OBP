@@ -1,8 +1,11 @@
 import pandas as pd
 import math
 import seaborn as sns
-from dss import load_data
 import matplotlib.pyplot as plt
+
+from dss import load_data
+from dss import depot_lat
+from dss import depot_lon
 
 # cd app
 # Lees het Excel-bestand in
@@ -21,9 +24,6 @@ def haversine(lat1, lon1, lat2, lon2):
 
 def distance_matrix():
     df = load_data('../Data/mini.csv')  
-    # Coördinaten van het depot
-    depot_lat = 52.16521
-    depot_lon = 5.17215
 
     # Voeg het depot als eerste rij en kolom toe aan de dataframe
     depot_row = pd.DataFrame({'name': ['Depot'], 'latitude': [depot_lat], 'longitude': [depot_lon]})
