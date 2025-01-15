@@ -3,7 +3,7 @@ import math
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-from dss import df
+#from dss import df
 from dss import depot_lat
 from dss import depot_lon
 
@@ -24,14 +24,14 @@ def haversine(lat1, lon1, lat2, lon2):
 
 def distance_matrix(df):
     # Voeg het depot als eerste rij en kolom toe aan de dataframe
-    depot_row = pd.DataFrame({'name': ['Depot'], 'latitude': [depot_lat], 'longitude': [depot_lon]})
+    depot_row = pd.DataFrame({'name': ['Depot'], 'lat': [depot_lat], 'lon': [depot_lon]})
     df2 = pd.concat([depot_row, df], ignore_index=True)
 
     # Maak een lege lijst voor de volledige afstandsmatrix (inclusief depot)
     full_distance_matrix = []
 
     # Bereken de afstanden tussen het depot en alle klanten (inclusief depot zelf)
-    coordinates = df2[['latitude', 'longitude']].values
+    coordinates = df2[['lat', 'lon']].values
 
     # Bereken de afstand van het depot naar elke klant en tussen klanten onderling
     for i in range(len(coordinates)):
@@ -66,5 +66,5 @@ def plot_heat_dist(matrix):
     plt.tight_layout()  # Zorgt ervoor dat alles netjes past
     plt.show()
 
-dmatrix = distance_matrix(df)
-plot_heat_dist(dmatrix)
+#dmatrix = distance_matrix(df)
+#plot_heat_dist(dmatrix)

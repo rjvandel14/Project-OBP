@@ -15,6 +15,7 @@ import streamlit as st
 from gui_components.gui_sidebar import render_sidebar
 from gui_components.gui_ranking import render_ranking
 from gui_components.gui_analysis import render_analysis
+from distancematrix import distance_matrix
 
 
 # Title
@@ -25,7 +26,9 @@ vehicle_capacity, cost_per_km, fixed_cost_per_truck, data = render_sidebar()
 
 # Display rankings
 if data is not None:
-    ranking_data = render_ranking(data)
+
+    dmatrix = distance_matrix(data)
+    ranking_data = render_ranking(dmatrix, data)
 
     # Analyze collaboration
     render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, ranking_data)

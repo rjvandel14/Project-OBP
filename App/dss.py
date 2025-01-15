@@ -11,12 +11,6 @@
 
 import pandas as pd
 
-#variables
-depot_lat = 52.16521
-depot_lon = 5.17215
-
-import pandas as pd
-
 # Variables
 depot_lat = 52.16521
 depot_lon = 5.17215
@@ -30,7 +24,7 @@ def load_data(file_path=None, data=None):
         return data
     elif file_path is not None:
         # Load data from the given file path
-        data = pd.read_csv(file_path, skiprows=1, names=["name", "latitude", "longitude"])
+        data = pd.read_csv(file_path, skiprows=1, names=["name", "lat", "lon"])
         return data
     else:
         raise ValueError("Either 'file_path' or 'data' must be provided.")
@@ -42,6 +36,6 @@ def load_data(file_path=None, data=None):
 #     return data
 
 #df = load_data('../Data/mini.csv')
-df = load_data('../Data/medium.csv')
+#df = load_data('../Data/medium.csv')
 
 
