@@ -22,7 +22,7 @@ def haversine(lat1, lon1, lat2, lon2):
 
     return R * c  # Afstand in kilometers
 
-def distance_matrix():
+def distance_matrix(df):
     # Voeg het depot als eerste rij en kolom toe aan de dataframe
     depot_row = pd.DataFrame({'name': ['Depot'], 'latitude': [depot_lat], 'longitude': [depot_lon]})
     df2 = pd.concat([depot_row, df], ignore_index=True)
@@ -53,10 +53,10 @@ def distance_matrix():
     # Resultaten tonen
     return customer_distance_df
 
-def plot_heat_dist(distance_matrix):
+def plot_heat_dist(matrix):
     # Plot de heatmap van de afstandsmatrix
     plt.figure(figsize=(12, 10))  # Vergroot de figuur voor betere leesbaarheid
-    sns.heatmap(distance_matrix, annot=True, cmap='YlGnBu', fmt='g', annot_kws={'size': 8})  # Verklein de annotatiegrootte
+    sns.heatmap(matrix, annot=True, cmap='YlGnBu', fmt='g', annot_kws={'size': 8})  # Verklein de annotatiegrootte
 
     # Draai de x- en y-as labels voor betere leesbaarheid
     plt.xticks(rotation=45, ha='right')  # Draai de x-as labels
@@ -66,5 +66,5 @@ def plot_heat_dist(distance_matrix):
     plt.tight_layout()  # Zorgt ervoor dat alles netjes past
     plt.show()
 
-dmatrix = distance_matrix()
+dmatrix = distance_matrix(df)
 plot_heat_dist(dmatrix)
