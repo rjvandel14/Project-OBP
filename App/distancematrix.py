@@ -67,4 +67,3 @@ def plot_heat_dist(distance_matrix):
     plt.show()
 
 dmatrix = distance_matrix()
-plot_heat_dist(dmatrix)
