@@ -13,7 +13,7 @@
 
 
 import streamlit as st
-from dss import load_data
+from dss import df
 from dash import Dash, html
 from ranking import get_mock_ranking, get_min_max_ranking
 from routing import mock_cvrp
@@ -27,13 +27,12 @@ vehicle_capacity = st.sidebar.number_input("Vehicle Capacity", min_value=1, valu
 cost_per_km = st.sidebar.number_input("Cost per KM (€)", min_value=0.0, value=2.5, format="%.2f")
 fixed_cost_per_truck = st.sidebar.number_input("Fixed Cost per Truck (€)", min_value=0.0, value=50.0, format="%.2f")
 
-data = load_data('../Data/mini.csv')
-unique_companies = data['name'].unique()
+unique_companies = df['name'].unique()
 
 # Fetch ranking data
 #ranking_data = get_mock_ranking()
 dmatrix = distance_matrix()
-ranking_data = get_min_max_ranking(dmatrix, data)
+ranking_data = get_min_max_ranking(dmatrix, df)
 
 # Display the top  10 ranked list -->
 st.subheader("Full Ranked List of Collaborations")

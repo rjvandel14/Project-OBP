@@ -13,10 +13,8 @@
 import folium
 import pandas as pd
 import streamlit as st
-from dss import load_data
+from dss import df
 from distancematrix import distance_matrix
-
-df = load_data('../Data/mini.csv')
 
 def get_mock_ranking():
     """
