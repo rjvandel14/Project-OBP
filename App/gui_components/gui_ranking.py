@@ -1,11 +1,10 @@
 import streamlit as st
+import pandas as pd
 from ranking import get_min_max_ranking
-from distancematrix import distance_matrix
 
-def render_ranking(data):
+def render_ranking(dmatrix, data):
     """Generates and displays the ranking data."""
-    # Generate the distance matrix
-    dmatrix = distance_matrix()
+
     ranking_data = get_min_max_ranking(dmatrix, data)
 
     # Display the top 10 ranked collaborations

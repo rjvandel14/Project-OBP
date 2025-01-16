@@ -1,10 +1,11 @@
 import streamlit as st
-from routing import mock_cvrp
+import pandas as pd
+from routing import all_cvrp
 
-def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, ranking_data):
+def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, dmatrix):
     """Handles company selection and performs collaboration analysis."""
     # Dropdowns for company selection
-    unique_companies = ranking_data["Company A"].unique()
+    unique_companies = data["name"].unique()
     placeholder_companies = ["Select a company", *unique_companies]
 
     st.subheader("Select Companies for Detailed Analysis")
@@ -19,7 +20,7 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, ranking
             st.error("Please select two different companies.")
         else:
             # Mock collaboration analysis
-            results = mock_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck)
+            results = all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, company_b, data, dmatrix)
             cost_a = results["Cost (€)"][0]
             cost_b = results["Cost (€)"][1]
             cost_collab = results["Cost (€)"][2]
