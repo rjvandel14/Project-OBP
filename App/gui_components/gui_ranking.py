@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from ranking import get_min_max_ranking
+from ranking_functions.ranking_minmax import get_min_max_ranking
 
 def render_ranking(dmatrix, data):
     """Generates and displays the ranking data."""
