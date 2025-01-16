@@ -10,6 +10,5 @@ dash
 folium
 scikit-learn
 kneed
-
 vrpy
 networkx
