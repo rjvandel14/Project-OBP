@@ -11,13 +11,13 @@
 # With ranking.py:
 # Validates rankings by solving VRPs for selected partnerships.
 # Provides ground truth for heuristic ranking evaluations.
-
-import pandas as pd
-import math
-from vrpy import VehicleRoutingProblem
+import folium
 import networkx as nx
+import streamlit as st
+import pandas as pd
 import folium
 
+from vrpy import VehicleRoutingProblem
 from dss import depot_lat
 from dss import depot_lon
 
@@ -87,6 +87,71 @@ def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, com
     ]}
 
     return result
+
+# Plots a map with the CVRP routes
+def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes = None, output_file='map.html'):
+    # Create a Folium map centered at the depot
+    m = folium.Map(location=[depot_lat, depot_lon], zoom_start=12)
+
+    # Add the depot marker
+    folium.Marker(
+        location=[depot_lat, depot_lon],
+        popup="Depot",
+        icon=folium.Icon(color="red", icon="info-sign")
+    ).add_to(m)
+
+    # Assign a unique color for each company
+    company_names = df['name'].unique()  # Use the 'name' column to identify companies
+    colors = ['blue', 'green', 'purple', 'orange', 'darkred', 'darkblue', 'cadetblue', 'lightgreen']  # Add more if needed
+    color_map = {name: colors[i % len(colors)] for i, name in enumerate(company_names)}
+
+    # Add customer markers for each company
+    for _, row in df.iterrows():
+        folium.Marker(
+            location=[row['lat'], row['lon']],
+            popup=f"Customer of {row['name']}",  # Display company name in the popup
+            icon=folium.Icon(color=color_map[row['name']])
+        ).add_to(m)
+
+    if routes:
+        for route_id, route in routes.items():
+            route_coords = []
+            # Loop through the route and get coordinates for each customer (except 'Source' and 'Sink')
+            for customer_index in route[1:-1]:
+                # Find the customer name and coordinates by index
+                customer_row = df.iloc[customer_index]
+                route_coords.append((customer_row['lat'], customer_row['lon']))
+
+            # Add polyline for this route
+            folium.PolyLine(route_coords, color="blue", weight=2.5, opacity=1).add_to(m)
+
+             # Add line from the first customer location to the depot
+            first_customer_index = route[1]
+            first_customer_row = df.iloc[first_customer_index]
+            folium.PolyLine(
+                locations=[(first_customer_row['lat'], first_customer_row['lon']),
+                           (depot_lat, depot_lon)],
+                color="blue", weight=2.5, opacity=1
+            ).add_to(m)
+
+            # Add line from the last customer location to the depot
+            last_customer_index = route[-2]
+            last_customer_row = df.iloc[last_customer_index]
+            folium.PolyLine(
+                locations=[(last_customer_row['lat'], last_customer_row['lon']),
+                           (depot_lat, depot_lon)],
+                color="blue", weight=2.5, opacity=1
+            ).add_to(m)
+
+    # Save the map to an HTML file
+    m.save(output_file)
+
+    # Streamlit output
+    st.title("Partnership Map")
+    st.write("Interactive map showing company customers and depot.")
+    st.components.v1.html(m._repr_html_(), height=600)
+
+    return m
 
 def mock_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck):
     """
