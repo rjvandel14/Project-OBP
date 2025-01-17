@@ -8,7 +8,7 @@ from dss import depot_lon
 def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, dmatrix):
     """Handles company selection and performs collaboration analysis."""
     # Dropdowns for company selection
-    unique_companies = data["name"].unique()
+    unique_companies = sorted(data["name"].unique())
     placeholder_companies = ["Select a company", *unique_companies]
 
     st.subheader("Select Companies for Detailed Analysis")
