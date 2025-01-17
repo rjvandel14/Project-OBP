@@ -16,7 +16,6 @@ import networkx as nx
 import streamlit as st
 import pandas as pd
 import folium
-
 from vrpy import VehicleRoutingProblem
 from dss import depot_lat
 from dss import depot_lon
@@ -100,13 +99,15 @@ def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes = Non
         icon=folium.Icon(color="red", icon="info-sign")
     ).add_to(m)
 
-    # Assign a unique color for each company
-    company_names = df['name'].unique()  # Use the 'name' column to identify companies
-    colors = ['blue', 'green', 'purple', 'orange', 'darkred', 'darkblue', 'cadetblue', 'lightgreen']  # Add more if needed
-    color_map = {name: colors[i % len(colors)] for i, name in enumerate(company_names)}
+    # Filter the dataframe for the two selected companies
+    filtered_df = df[df['name'].isin([company_a, company_b])]
 
-    # Add customer markers for each company
-    for _, row in df.iterrows():
+    # Assign a unique color for each company in the selected companies
+    colors = ['blue', 'green', 'purple', 'orange', 'darkred', 'darkblue', 'cadetblue', 'lightgreen']  # Add more if needed
+    color_map = {company_a: colors[0], company_b: colors[1]}  # Assign colors to the two companies
+
+    # Add customer markers for the selected companies
+    for _, row in filtered_df.iterrows():
         folium.Marker(
             location=[row['lat'], row['lon']],
             popup=f"Customer of {row['name']}",  # Display company name in the popup
