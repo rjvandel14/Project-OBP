@@ -11,24 +11,27 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
     # Display the ranked collaborations
     st.subheader("Ranked Collaborations")
 
-    # Initialize the "Show More" toggle state in session
-    if "show_full_ranking" not in st.session_state:
-        st.session_state.show_full_ranking = False
+    # Initialize session state variables
+    if "rows_to_display" not in st.session_state:
+        st.session_state.rows_to_display = 10  # Start with the top 10 rows
+    if "first_show_more" not in st.session_state:
+        st.session_state.first_show_more = True  # Tracks whether it's the first click
 
     # Generate a hash for the current dataset
     current_data_hash = hash(pd.util.hash_pandas_object(ranking_data).sum())
 
-    # Reset states only if the dataset changes
+    # Reset states if the dataset changes
     if (
         "current_data_hash" not in st.session_state
         or st.session_state.current_data_hash != current_data_hash
     ):
         st.session_state.current_data_hash = current_data_hash
-        st.session_state.show_full_ranking = False
+        st.session_state.rows_to_display = 10
+        st.session_state.first_show_more = True  # Reset first click flag
         st.session_state.toggle_states = {index: False for index in ranking_data.index}
 
-    # Decide how many rows to display based on toggle state
-    rows_to_display = ranking_data if st.session_state.show_full_ranking else ranking_data.head(10)
+    # Decide how many rows to display
+    rows_to_display = ranking_data.head(st.session_state.rows_to_display)
 
     # Iterate through the rows and display them with toggle buttons
     for index, row in rows_to_display.iterrows():
@@ -78,13 +81,18 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
                 st.write(f"Cost for collaboration: {cost_collab}")
                 st.write(f"Total savings: {cost_a + cost_b - cost_collab}")
 
-    # Place the "Show More" button below the table if there are more than 10 rows
-    if len(ranking_data) > 10:
-        show_more_button = st.button(
-            "Show More" if not st.session_state.show_full_ranking else "Show Top 10",
-            key="show_more_button",
-        )
-        if show_more_button:
-            st.session_state.show_full_ranking = not st.session_state.show_full_ranking
+    # Callback to handle "Show More" button
+    def show_more_callback():
+        if st.session_state.first_show_more:
+            st.session_state.rows_to_display += 40  # First click adds 40 rows
+            st.session_state.first_show_more = False  # After first click, switch to normal behavior
+        else:
+            st.session_state.rows_to_display += 50  # Subsequent clicks add 50 rows
+
+    # Place the "Show More" button below the table
+    if len(ranking_data) > st.session_state.rows_to_display:
+        col1, col2, col3 = st.columns([1, 8, 1])  # Center-align the button
+        with col2:
+            st.button("Show More", key="show_more_button", on_click=show_more_callback)
 
     return ranking_data
