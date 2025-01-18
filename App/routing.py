@@ -84,9 +84,9 @@ def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, com
 
     result = {
     "Scenario": [company_a, company_b, "Collaboration"],
-    "Total Cost (€)": [round(cost_a,2), round(cost_b,2), round(combined_cost,2)],
-    "Truck Cost (€)": [len(route_a) * fixed_cost_per_truck, len(route_b) * fixed_cost_per_truck, len(route_combined) * fixed_cost_per_truck],
-    "Driving Cost (€)": [round(cost_a,2) - len(route_a) * fixed_cost_per_truck, round(cost_b,2) - len(route_b) * fixed_cost_per_truck, round(combined_cost,2) - len(route_combined) * fixed_cost_per_truck],
+    "Total Cost": [round(cost_a,2), round(cost_b,2), round(combined_cost,2)],
+    "Truck Cost": [len(route_a) * fixed_cost_per_truck, len(route_b) * fixed_cost_per_truck, len(route_combined) * fixed_cost_per_truck],
+    "Driving Cost": [round(cost_a,2) - len(route_a) * fixed_cost_per_truck, round(cost_b,2) - len(route_b) * fixed_cost_per_truck, round(combined_cost,2) - len(route_combined) * fixed_cost_per_truck],
     "Routes": [route_a, route_b, route_combined]
     }
 
@@ -165,7 +165,7 @@ def mock_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck):
     """
     mock_data = {
     "Scenario": ["Company A", "Company B", "Collaboration"],
-    "Cost (€)": [500.0, 600.0, 900.0],
+    "Cost": [500.0, 600.0, 900.0],
     "Routes": [
         [[0, 2, 3, 0], [0, 4, 1, 0]],  # Routes for Company A
         [[0, 5, 6, 0]],                # Routes for Company B
