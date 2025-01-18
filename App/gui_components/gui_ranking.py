@@ -16,6 +16,12 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
         st.session_state.rows_to_display = 10  # Start with the top 10 rows
     if "first_show_more" not in st.session_state:
         st.session_state.first_show_more = True  # Tracks whether it's the first click
+    if "toggle_states" not in st.session_state:
+        st.session_state.toggle_states = {}
+    if "checkbox_states" not in st.session_state:
+        st.session_state.checkbox_states = {}
+    if "recalculate" not in st.session_state:
+        st.session_state.recalculate = False
 
     # Generate a hash for the current dataset
     current_data_hash = hash(pd.util.hash_pandas_object(ranking_data).sum())
@@ -29,13 +35,15 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
         st.session_state.rows_to_display = 10
         st.session_state.first_show_more = True  # Reset first click flag
         st.session_state.toggle_states = {index: False for index in ranking_data.index}
+        st.session_state.checkbox_states = {index: False for index in ranking_data.index}
+        st.session_state.recalculate = False
 
     # Decide how many rows to display
     rows_to_display = ranking_data.head(st.session_state.rows_to_display)
 
-    # Iterate through the rows and display them with toggle buttons
+    # Iterate through the rows and display them with toggle buttons and checkboxes
     for index, row in rows_to_display.iterrows():
-        col1, col2, col3, col4 = st.columns([1, 3, 3, 2])  # Adjust column widths
+        col1, col2, col3, col4, col5 = st.columns([1, 3, 3, 2, 3])  # Adjust column widths
 
         with col1:
             st.write(f"{row['Rank']}")  # Display the rank
@@ -54,32 +62,52 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
                     st.session_state.toggle_states[key] = False
                 # Set the clicked row's state to True
                 st.session_state.toggle_states[index] = True
+                st.session_state.recalculate = True  # Mark for recalculation
+
+        with col5:
+            # Manage checkbox state in session state
+            if f"checkbox_{index}" not in st.session_state.checkbox_states:
+                st.session_state.checkbox_states[f"checkbox_{index}"] = False
+
+            # Use Streamlit's checkbox widget
+            st.session_state.checkbox_states[f"checkbox_{index}"] = st.checkbox(
+                f"Time limited calculation",
+                key=f"checkbox_{index}",
+                value=st.session_state.checkbox_states[f"checkbox_{index}"]
+            )
 
         # Show or hide analysis based on the toggle state
         if st.session_state.toggle_states.get(index, False):
-            with st.expander(f"Analysis for {row['Company A']} ↔ {row['Company B']}", expanded=True):
+            timelimit = st.session_state.checkbox_states.get(f"checkbox_{index}", False)
+
+            # Expand the analysis section
+            with st.expander(f"Analysis for {row['Company A']} ↔ {row['Company B']} with time limit on calculations", expanded=True):
                 st.write(f"**Analyzing collaboration between {row['Company A']} and {row['Company B']}**")
 
-                # Call the routing function to get analysis results
-                results = all_cvrp(
-                    vehicle_capacity,
-                    cost_per_km,
-                    fixed_cost_per_truck,
-                    row["Company A"],
-                    row["Company B"],
-                    data,
-                    dmatrix,
-                )
+                # Perform recalculation only if triggered by the "Analyze" button
+                if st.session_state.recalculate:
+                    results = all_cvrp(
+                        vehicle_capacity,
+                        cost_per_km,
+                        fixed_cost_per_truck,
+                        row["Company A"],
+                        row["Company B"],
+                        data,
+                        dmatrix,
+                        timelimit,
+                    )
 
-                # Display the results
-                cost_a = results["Cost (€)"][0]
-                cost_b = results["Cost (€)"][1]
-                cost_collab = results["Cost (€)"][2]
-                st.write(f"**Results:**")
-                st.write(f"Cost for {row['Company A']}: {cost_a}")
-                st.write(f"Cost for {row['Company B']}: {cost_b}")
-                st.write(f"Cost for collaboration: {cost_collab}")
-                st.write(f"Total savings: {cost_a + cost_b - cost_collab}")
+                    # Display the results
+                    cost_a = results["Cost (€)"][0]
+                    cost_b = results["Cost (€)"][1]
+                    cost_collab = results["Cost (€)"][2]
+                    st.write(f"**Results:**")
+                    st.write(f"Cost for {row['Company A']}: {cost_a}")
+                    st.write(f"Cost for {row['Company B']}: {cost_b}")
+                    st.write(f"Cost for collaboration: {cost_collab}")
+                    st.write(f"Total savings: {cost_a + cost_b - cost_collab}")
+
+                st.session_state.recalculate = False  # Reset recalculation flag
 
     # Callback to handle "Show More" button
     def show_more_callback():
