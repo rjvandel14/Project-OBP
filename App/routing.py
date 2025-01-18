@@ -84,9 +84,11 @@ def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, com
 
     result = {
     "Scenario": [company_a, company_b, "Collaboration"],
-    "Cost (€)": [round(cost_a,2), round(cost_b,2), round(combined_cost,2)],
-    "Routes": [route_a, route_b, route_combined
-    ]}
+    "Total Cost": [round(cost_a,2), round(cost_b,2), round(combined_cost,2)],
+    "Truck Cost": [len(route_a) * fixed_cost_per_truck, len(route_b) * fixed_cost_per_truck, len(route_combined) * fixed_cost_per_truck],
+    "Driving Cost": [round(cost_a,2) - len(route_a) * fixed_cost_per_truck, round(cost_b,2) - len(route_b) * fixed_cost_per_truck, round(combined_cost,2) - len(route_combined) * fixed_cost_per_truck],
+    "Routes": [route_a, route_b, route_combined]
+    }
 
     return result
 

@@ -22,17 +22,20 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, d
         elif company_a == company_b:
             st.error("Please select two different companies.")
         else:
-            # Mock collaboration analysis
-            results = all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, company_b, data, dmatrix, timelimit=False)
-            cost_a = results["Cost (€)"][0]
-            cost_b = results["Cost (€)"][1]
-            cost_collab = results["Cost (€)"][2]
+            results = all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, company_b, data, dmatrix)
+            total_cost_a = results["Total Cost"][0]
+            total_cost_b = results["Total Cost"][1]
+            total_cost_collab = results["Total Cost"][2]
 
             # Display the results
             st.subheader("Analysis Results")
-            st.write(f"Cost for {company_a}: {cost_a}")
-            st.write(f"Cost for {company_b}: {cost_b}")
-            st.write(f"Cost for collaboration: {cost_collab}")
-            st.write(f"Total savings: {cost_a + cost_b - cost_collab}")
-            
+            total_cost_a = results["Total Cost"][0]
+            total_cost_b = results["Total Cost"][1]
+            total_cost_collab = results["Total Cost"][2]
+
+            st.write(f'{company_a}: Total costs {total_cost_a}, Fixed truck costs {results["Truck Cost"][0]}, Kilometer costs {results["Driving Cost"][0]}')
+            st.write(f'{company_b}: Total costs {total_cost_b}, Fixed truck costs {results["Truck Cost"][1]}, Kilometer costs {results["Driving Cost"][1]}')
+            st.write(f'Collaboration: Total costs {total_cost_collab}, Fixed truck costs {results["Truck Cost"][2]}, Kilometer costs {results["Driving Cost"][2]}')
+            st.write(f"Total savings: {total_cost_a + total_cost_b - total_cost_collab}")
+
             plot_routes_map(data, depot_lat, depot_lon, company_a, company_b, results["Routes"][2], output_file='routes_map.html')

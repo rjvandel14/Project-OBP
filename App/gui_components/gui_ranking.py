@@ -98,9 +98,9 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
                     )
 
                     # Display the results
-                    cost_a = results["Cost (€)"][0]
-                    cost_b = results["Cost (€)"][1]
-                    cost_collab = results["Cost (€)"][2]
+                    cost_a = results["Total Cost"][0]
+                    cost_b = results["Total Cost"][1]
+                    cost_collab = results["Total Cost"][2]
                     st.write(f"**Results:**")
                     st.write(f"Cost for {row['Company A']}: {cost_a}")
                     st.write(f"Cost for {row['Company B']}: {cost_b}")
