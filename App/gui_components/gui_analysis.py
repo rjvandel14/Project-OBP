@@ -23,9 +23,6 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, d
             st.error("Please select two different companies.")
         else:
             results = all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, company_b, data, dmatrix)
-            total_cost_a = results["Total Cost"][0]
-            total_cost_b = results["Total Cost"][1]
-            total_cost_collab = results["Total Cost"][2]
 
             # Display the results
             st.subheader("Analysis Results")
