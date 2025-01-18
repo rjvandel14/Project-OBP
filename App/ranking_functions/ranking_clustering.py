@@ -10,8 +10,8 @@ from folium.plugins import MarkerCluster
 import sys
 import os
 
+# Load your custom functions
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from distancematrix import distance_matrix
 from dss import load_data
 
 def find_optimal_clusters(data, max_clusters=10):
@@ -23,18 +23,21 @@ def find_optimal_clusters(data, max_clusters=10):
     wcss = []
     silhouette_scores = []
 
-    for k in range(2, max_clusters + 1):  # Start from k=2
+    for k in range(2, min(max_clusters + 1, len(data))):  # Start from k=2
         kmeans = KMeans(n_clusters=k, random_state=42)
         cluster_labels = kmeans.fit_predict(data)
 
         # Calculate WCSS
         wcss.append(kmeans.inertia_)
 
-        # Calculate Silhouette Score
-        silhouette_scores.append(silhouette_score(data, cluster_labels))
+        # Calculate Silhouette Score if possible
+        if len(data) > k:
+            silhouette_scores.append(silhouette_score(data, cluster_labels))
+        else:
+            silhouette_scores.append(None)
 
     # Find the optimal k using the Elbow Method
-    kn = KneeLocator(range(2, max_clusters + 1), wcss, curve="convex", direction="decreasing")
+    kn = KneeLocator(range(2, len(wcss) + 2), wcss, curve="convex", direction="decreasing")
     elbow_k = kn.knee
 
     # Fallback if no clear elbow is found
@@ -43,73 +46,36 @@ def find_optimal_clusters(data, max_clusters=10):
 
     return elbow_k, wcss, silhouette_scores
 
-def plot_elbow_method(wcss, optimal_k):
+def create_customer_and_cluster_map(df, cluster_assignments, depot_lat, depot_lon):
     """
-    Plot the elbow method for WCSS with the optimal number of clusters highlighted.
+    Create an interactive map showing customers and cluster areas.
     """
-    fig, ax = plt.subplots(figsize=(8, 6))
-    x = range(2, len(wcss) + 2)
-
-    ax.plot(x, wcss, marker="o", label="WCSS")
-    if optimal_k:
-        ax.axvline(optimal_k, color="red", linestyle="--", label=f"Optimal k = {optimal_k}")
-        ax.scatter(optimal_k, wcss[optimal_k - 2], color="red", zorder=5)
-    ax.set_title("Elbow Method for Optimal Clusters")
-    ax.set_xlabel("Number of Clusters (k)")
-    ax.set_ylabel("WCSS")
-    ax.grid()
-    ax.legend()
-    return fig
-
-def plot_silhouette_scores(silhouette_scores, optimal_k):
-    """
-    Plot the silhouette scores for different numbers of clusters with the optimal k highlighted.
-    """
-    fig, ax = plt.subplots(figsize=(8, 6))
-    x = range(2, len(silhouette_scores) + 2)
-
-    ax.plot(x, silhouette_scores, marker="o", label="Silhouette Score")
-    if optimal_k:
-        ax.axvline(optimal_k, color="red", linestyle="--", label=f"Optimal k = {optimal_k}")
-        ax.scatter(optimal_k, silhouette_scores[optimal_k - 2], color="red", zorder=5)
-    ax.set_title("Silhouette Scores for Different Numbers of Clusters")
-    ax.set_xlabel("Number of Clusters (k)")
-    ax.set_ylabel("Silhouette Score")
-    ax.grid()
-    ax.legend()
-    return fig
-
-def create_cluster_map(df, cluster_assignments, depot_lat, depot_lon):
-    """
-    Create an interactive map showing customers and clusters.
-    """
-    # Merge cluster assignments with customer data
-    df = df.copy()  # Avoid modifying the original dataframe
     df["Cluster"] = cluster_assignments
 
     # Create a Folium map centered at the depot
     m = folium.Map(location=[depot_lat, depot_lon], zoom_start=8)
 
-    # Assign a unique color for each company
-    company_names = df["name"].unique()
-    company_colors = ['blue', 'green', 'purple', 'orange', 'darkred', 'darkblue', 'cadetblue', 'lightgreen']
-    color_map = {name: company_colors[i % len(company_colors)] for i, name in enumerate(company_names)}
+    # Assign unique colors for companies
+    company_colors = ['blue', 'green', 'purple', 'orange', 'darkred', 'darkblue']
+    company_color_map = {company: company_colors[i % len(company_colors)] for i, company in enumerate(df["name"].unique())}
 
-    # Add customer markers colored by company
+    # Add all customers to the map
     for _, row in df.iterrows():
         folium.Marker(
-            location=[row["lat"], row["lon"]],  # Use correct column names
+            location=[row["lat"], row["lon"]],
             popup=f"Customer of {row['name']} (Cluster {row['Cluster']})",
-            icon=folium.Icon(color=color_map[row["name"]])
+            icon=folium.Icon(color=company_color_map[row["name"]])
         ).add_to(m)
 
-    # Draw circles around each cluster
+    # Draw cluster clouds
     for cluster_id in df["Cluster"].unique():
         cluster_data = df[df["Cluster"] == cluster_id]
         cluster_center = cluster_data[["lat", "lon"]].mean().values
+        distances = np.linalg.norm(cluster_data[["lat", "lon"]].values - cluster_center, axis=1) * 111000  # Approximate meters
+        cluster_radius = max(distances.max(), 20000)  # Maximum distance or minimum radius
         folium.Circle(
             location=cluster_center,
-            radius=15000,  # Adjust radius as needed
+            radius=cluster_radius,
             color="black",
             fill=True,
             fill_opacity=0.2,
@@ -123,44 +89,73 @@ def create_cluster_map(df, cluster_assignments, depot_lat, depot_lon):
         icon=folium.Icon(color="red", icon="info-sign")
     ).add_to(m)
 
-    # Streamlit output
-    st.subheader("Cluster Map")
-    st.write("Interactive map showing customer clusters.")
+    st.subheader("Customer and Cluster Map")
+    st.write("Interactive map showing all customers and clusters with cluster clouds.")
     st.components.v1.html(m._repr_html_(), height=600)
-    
 
-# Streamlit app for personal clustering exploration
-st.title("Clustering Results and Visualizations")
 
-# Load the data
-# df = load_data('../Data/mini.csv')
+def rank_partnerships(df):
+    """
+    Rank company partnerships based on cluster overlap.
+    """
+    partnerships = []
+    for cluster_id in df["Cluster"].unique():
+        companies_in_cluster = df[df["Cluster"] == cluster_id]["name"].unique()
+        for i, company_a in enumerate(companies_in_cluster):
+            for company_b in companies_in_cluster[i + 1:]:
+                partnerships.append({
+                    "Company A": company_a,
+                    "Company B": company_b,
+                    "Cluster": cluster_id
+                })
+
+    partnership_df = pd.DataFrame(partnerships)
+    partnership_df["Rank"] = partnership_df["Cluster"].rank(method="dense").astype(int)
+
+    return partnership_df
+
+# Streamlit app
+st.title("Company Partnership Optimization")
+
+# Load data
 df = load_data('C:/Users/daydo/Documents/GitHub/Project-OBP/Data/mini.csv')
-# dmatrix = distance_matrix(df)
-
-# Extract relevant data for clustering
-customer_data = df[["lat", "lon"]]
 
 # Dynamically calculate max_clusters
-max_clusters = st.slider("Select the maximum number of clusters to evaluate:", 2, len(df["name"].unique()), 10)
+max_clusters = st.slider("Select the maximum number of clusters to evaluate:", 2, len(df), 4)
 
-# Find optimal clusters
-optimal_k, wcss, silhouette_scores = find_optimal_clusters(customer_data, max_clusters)
+# Find the optimal clusters for customer locations
+optimal_k, wcss, silhouette_scores = find_optimal_clusters(df[["lat", "lon"]], max_clusters)
 st.write(f"Optimal number of clusters: {optimal_k}")
 
-# Display WCSS and Silhouette plot
+# Display WCSS and Silhouette Score plots
 st.subheader("Elbow Method for Optimal Clusters")
-elbow_fig = plot_elbow_method(wcss, optimal_k)
-st.pyplot(elbow_fig)
+fig1 = plt.figure()
+plt.plot(range(2, len(wcss) + 2), wcss, marker="o")
+plt.axvline(optimal_k, color="red", linestyle="--")
+plt.title("Elbow Method")
+plt.xlabel("Number of Clusters")
+plt.ylabel("WCSS")
+st.pyplot(fig1)
 
-st.subheader("Silhouette Scores Plot:")
-silhouette_fig = plot_silhouette_scores(silhouette_scores, optimal_k)
-st.pyplot(silhouette_fig)
+st.subheader("Silhouette Scores for Clustering")
+fig2 = plt.figure()
+plt.plot(range(2, len(silhouette_scores) + 2), silhouette_scores, marker="o")
+plt.axvline(optimal_k, color="red", linestyle="--")
+plt.title("Silhouette Scores")
+plt.xlabel("Number of Clusters")
+plt.ylabel("Silhouette Score")
+st.pyplot(fig2)
 
-# Perform clustering
+# Perform clustering on customer locations
 kmeans = KMeans(n_clusters=optimal_k, random_state=42)
-cluster_labels = kmeans.fit_predict(customer_data)
+customer_clusters = kmeans.fit_predict(df[["lat", "lon"]])
 
-# Create and display the cluster map
+# Create and display the customer and cluster map
 depot_lat = 52.16521
 depot_lon = 5.17215
-create_cluster_map(df, cluster_labels, depot_lat, depot_lon)
+create_customer_and_cluster_map(df, customer_clusters, depot_lat, depot_lon)
+
+# Rank partnerships
+st.subheader("Partnership Rankings")
+partnerships = rank_partnerships(df)
+st.dataframe(partnerships)
