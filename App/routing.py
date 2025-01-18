@@ -11,19 +11,18 @@
 # With ranking.py:
 # Validates rankings by solving VRPs for selected partnerships.
 # Provides ground truth for heuristic ranking evaluations.
-
-import pandas as pd
-import math
-from vrpy import VehicleRoutingProblem
-import networkx as nx
 import folium
-
+import networkx as nx
+import streamlit as st
+import pandas as pd
+import folium
+from vrpy import VehicleRoutingProblem
 from dss import depot_lat
 from dss import depot_lon
 
     
 # Function to solve VRP for a given dataset
-def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distance_matrix):
+def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distance_matrix, timelimit):
     # Create a directed graph
     G = nx.DiGraph()
 
@@ -56,7 +55,7 @@ def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distanc
     vrp = VehicleRoutingProblem(G)
     vrp.load_capacity = vehicle_capacity
     vrp.fixed_cost = fixed_cost_per_truck
-    vrp.solve()
+    vrp.solve(cspy=True, time_limit= timelimit)
 
     return vrp.best_value, vrp.best_routes
 
@@ -72,21 +71,93 @@ def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, com
         collaboration_data = data[data['name'].isin(collaborating_companies)].copy()
         collaboration_data['name'] = "Collaboration"  # Label as one entity
         data = pd.concat([data[~data['name'].isin(collaborating_companies)], collaboration_data])
+    
+    
+    timelimit = 10 + len(collaboration_data['name'])
 
     # Solve VRP for individual companies
-    cost_a, route_a = solve_vrp(company1_data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, dmatrix )
-    cost_b, route_b = solve_vrp(company2_data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, dmatrix)
+    cost_a, route_a = solve_vrp(company1_data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, dmatrix, timelimit)
+    cost_b, route_b = solve_vrp(company2_data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, dmatrix, timelimit)
 
     # Solve VRP for combined companies
-    combined_cost, route_combined = solve_vrp(collaboration_data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, dmatrix)
+    combined_cost, route_combined = solve_vrp(collaboration_data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, dmatrix, timelimit)
 
     result = {
     "Scenario": [company_a, company_b, "Collaboration"],
-    "Cost (€)": [round(cost_a,2), round(cost_b,2), round(combined_cost,2)],
-    "Routes": [route_a, route_b, route_combined
-    ]}
+    "Total Cost": [round(cost_a,2), round(cost_b,2), round(combined_cost,2)],
+    "Truck Cost": [len(route_a) * fixed_cost_per_truck, len(route_b) * fixed_cost_per_truck, len(route_combined) * fixed_cost_per_truck],
+    "Driving Cost": [round(cost_a,2) - len(route_a) * fixed_cost_per_truck, round(cost_b,2) - len(route_b) * fixed_cost_per_truck, round(combined_cost,2) - len(route_combined) * fixed_cost_per_truck],
+    "Routes": [route_a, route_b, route_combined]
+    }
 
     return result
+
+# Plots a map with the CVRP routes
+def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes = None, output_file='map.html'):
+    # Create a Folium map centered at the depot
+    m = folium.Map(location=[depot_lat, depot_lon], zoom_start=12)
+
+    # Add the depot marker
+    folium.Marker(
+        location=[depot_lat, depot_lon],
+        popup="Depot",
+        icon=folium.Icon(color="red", icon="info-sign")
+    ).add_to(m)
+
+    # Filter the dataframe for the two selected companies
+    filtered_df = df[df['name'].isin([company_a, company_b])]
+
+    # Assign a unique color for each company in the selected companies
+    colors = ['blue', 'green', 'purple', 'orange', 'darkred', 'darkblue', 'cadetblue', 'lightgreen']  # Add more if needed
+    color_map = {company_a: colors[0], company_b: colors[1]}  # Assign colors to the two companies
+
+    # Add customer markers for the selected companies
+    for _, row in filtered_df.iterrows():
+        folium.Marker(
+            location=[row['lat'], row['lon']],
+            popup=f"Customer of {row['name']}",  # Display company name in the popup
+            icon=folium.Icon(color=color_map[row['name']])
+        ).add_to(m)
+
+    if routes:
+        for route_id, route in routes.items():
+            route_coords = []
+            # Loop through the route and get coordinates for each customer (except 'Source' and 'Sink')
+            for customer_index in route[1:-1]:
+                # Find the customer name and coordinates by index
+                customer_row = df.iloc[customer_index]
+                route_coords.append((customer_row['lat'], customer_row['lon']))
+
+            # Add polyline for this route
+            folium.PolyLine(route_coords, color="blue", weight=2.5, opacity=1).add_to(m)
+
+             # Add line from the first customer location to the depot
+            first_customer_index = route[1]
+            first_customer_row = df.iloc[first_customer_index]
+            folium.PolyLine(
+                locations=[(first_customer_row['lat'], first_customer_row['lon']),
+                           (depot_lat, depot_lon)],
+                color="blue", weight=2.5, opacity=1
+            ).add_to(m)
+
+            # Add line from the last customer location to the depot
+            last_customer_index = route[-2]
+            last_customer_row = df.iloc[last_customer_index]
+            folium.PolyLine(
+                locations=[(last_customer_row['lat'], last_customer_row['lon']),
+                           (depot_lat, depot_lon)],
+                color="blue", weight=2.5, opacity=1
+            ).add_to(m)
+
+    # Save the map to an HTML file
+    m.save(output_file)
+
+    # Streamlit output
+    st.title("Partnership Map")
+    st.write("Interactive map showing company customers and depot.")
+    st.components.v1.html(m._repr_html_(), height=600)
+
+    return m
 
 def mock_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck):
     """
@@ -94,7 +165,7 @@ def mock_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck):
     """
     mock_data = {
     "Scenario": ["Company A", "Company B", "Collaboration"],
-    "Cost (€)": [500.0, 600.0, 900.0],
+    "Cost": [500.0, 600.0, 900.0],
     "Routes": [
         [[0, 2, 3, 0], [0, 4, 1, 0]],  # Routes for Company A
         [[0, 5, 6, 0]],                # Routes for Company B
