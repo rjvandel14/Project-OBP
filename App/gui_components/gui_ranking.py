@@ -26,8 +26,8 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
         st.session_state.toggle_states = {}
     if "checkbox_states" not in st.session_state:
         st.session_state.checkbox_states = {}
-    if "recalculate" not in st.session_state:
-        st.session_state.recalculate = False
+    if "results" not in st.session_state:
+        st.session_state.results = {}
 
     # Generate a hash for the current dataset
     current_data_hash = hash(pd.util.hash_pandas_object(ranking_data).sum())
@@ -42,7 +42,7 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
         st.session_state.first_show_more = True  # Reset first click flag
         st.session_state.toggle_states = {index: False for index in ranking_data.index}
         st.session_state.checkbox_states = {index: False for index in ranking_data.index}
-        st.session_state.recalculate = False
+        st.session_state.results = {}
 
     # Decide how many rows to display
     rows_to_display = ranking_data.head(st.session_state.rows_to_display)
@@ -68,7 +68,6 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
                     st.session_state.toggle_states[key] = False
                 # Set the clicked row's state to True
                 st.session_state.toggle_states[index] = True
-                st.session_state.recalculate = True  # Mark for recalculation
 
         with col5:
             # Manage checkbox state in session state
@@ -83,15 +82,14 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
             )
 
         # Show or hide analysis based on the toggle state
+        timelimit = st.session_state.checkbox_states.get(f"checkbox_{index}", False)
         if st.session_state.toggle_states.get(index, False):
-            timelimit = st.session_state.checkbox_states.get(f"checkbox_{index}", False)
-
             # Expand the analysis section
-            with st.expander(f"Analysis for {row['Company A']} ↔ {row['Company B']} with time limit on calculations", expanded=True):
+            with st.expander(f"Analysis for {row['Company A']} ↔ {row['Company B']}", expanded=True):
                 st.write(f"**Analyzing collaboration between {row['Company A']} and {row['Company B']}**")
 
-                # Perform recalculation only if triggered by the "Analyze" button
-                if st.session_state.recalculate:
+                # Perform recalculation only if no results exist for this index
+                if index not in st.session_state.results:
                     results = all_cvrp(
                         vehicle_capacity,
                         cost_per_km,
@@ -102,18 +100,21 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
                         dmatrix,
                         timelimit,
                     )
+                    st.session_state.results[index] = results  # Save results in session state
 
-                    # Display the results
-                    cost_a = results["Total Cost"][0]
-                    cost_b = results["Total Cost"][1]
-                    cost_collab = results["Total Cost"][2]
-                    st.write(f"**Results:**")
-                    st.write(f"Cost for {row['Company A']}: {cost_a}")
-                    st.write(f"Cost for {row['Company B']}: {cost_b}")
-                    st.write(f"Cost for collaboration: {cost_collab}")
-                    st.write(f"Total savings: {cost_a + cost_b - cost_collab}")
-
-                st.session_state.recalculate = False  # Reset recalculation flag
+        # Retrieve results from session state
+        results = st.session_state.results.get(index)
+        if results:
+            # Always display results if they exist
+            with st.expander(f"Analysis Results for {row['Company A']} ↔ {row['Company B']}, result may be suboptimal because of time limit ", expanded=True):
+                cost_a = results["Total Cost"][0]
+                cost_b = results["Total Cost"][1]
+                cost_collab = results["Total Cost"][2]
+                st.write(f"**Results:**")
+                st.write(f"Cost for {row['Company A']}: {cost_a}")
+                st.write(f"Cost for {row['Company B']}: {cost_b}")
+                st.write(f"Cost for collaboration: {cost_collab}")
+                st.write(f"Total savings: {cost_a + cost_b - cost_collab}")
 
     # Callback to handle "Show More" button
     def show_more_callback():
