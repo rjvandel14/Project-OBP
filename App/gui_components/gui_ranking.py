@@ -3,13 +3,19 @@ import pandas as pd
 from ranking_functions.ranking_minmax import get_min_max_ranking
 from routing import all_cvrp
 
-def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_truck):
+def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, selected_company):
     """Generates and displays the ranking data."""
 
     ranking_data = get_min_max_ranking(dmatrix, data)
 
     # Display the ranked collaborations
     st.subheader("Ranked Collaborations")
+
+    if selected_company != "All":
+        ranking_data = ranking_data[
+            (ranking_data['Company A'] == selected_company) | 
+            (ranking_data['Company B'] == selected_company)
+        ]
 
     # Initialize session state variables
     if "rows_to_display" not in st.session_state:
