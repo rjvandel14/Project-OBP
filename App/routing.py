@@ -23,6 +23,7 @@ from dss import depot_lon
     
 # Function to solve VRP for a given dataset
 def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distance_matrix, timelimit):
+def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distance_matrix, timelimit):
     # Create a directed graph
     G = nx.DiGraph()
 
@@ -59,7 +60,7 @@ def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distanc
 
     return vrp.best_value, vrp.best_routes
 
-def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, company_b, data, dmatrix):
+def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, company_b, data, dmatrix, timelimit = False):
      # Define companies to collaborate
     collaborating_companies = (company_a, company_b)
 
@@ -72,8 +73,8 @@ def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, com
         collaboration_data['name'] = "Collaboration"  # Label as one entity
         data = pd.concat([data[~data['name'].isin(collaborating_companies)], collaboration_data])
     
-    
-    timelimit = 10 + len(collaboration_data['name'])
+    if timelimit:
+        timelimit = 10 #+ len(collaboration_data['name'])
 
     # Solve VRP for individual companies
     cost_a, route_a = solve_vrp(company1_data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, dmatrix, timelimit)
