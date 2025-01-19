@@ -23,7 +23,6 @@ from dss import depot_lon
     
 # Function to solve VRP for a given dataset
 def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distance_matrix, timelimit):
-def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distance_matrix, timelimit):
     # Create a directed graph
     G = nx.DiGraph()
 
