@@ -52,4 +52,4 @@ def get_min_max_ranking(dmatrix, df):
     partnership_df['Rank'] = partnership_df.index + 1
 
     # Reorder columns for clarity
-    return partnership_df[['Rank', 'Company A', 'Company B']]
+    return partnership_df[['Rank', 'Company A', 'Company B', 'Min_Max_Score']]
