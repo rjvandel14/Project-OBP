@@ -1,10 +1,8 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, DBSCAN
 from sklearn.metrics import silhouette_score
-from kneed import KneeLocator
 import folium
 import sys
 import os
@@ -12,10 +10,17 @@ import os
 # Load your custom functions
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from dss import load_data
-df = load_data('C:/Users/daydo/Documents/GitHub/Project-OBP/Data/mini.csv')
+from distancematrix import distance_matrix
 
-# Determine optimal number of clusters
-def optimal_clusters(data, max_clusters=10):
+# Load data and distance matrix
+df = load_data('C:/Users/daydo/Documents/GitHub/Project-OBP/Data/medium.csv')
+dmatrix = distance_matrix(df)  # Precomputed distance matrix
+
+# Exclude depot row/column from the distance matrix
+dmatrix_without_depot = dmatrix.iloc[1:, 1:]  # Assuming the depot is the first row/column
+
+# Function to calculate Silhouette Scores for K-Means
+def calculate_silhouette_scores(data, max_clusters=10):
     scores = []
     cluster_range = range(2, max_clusters + 1)
     for n_clusters in cluster_range:
@@ -25,9 +30,19 @@ def optimal_clusters(data, max_clusters=10):
         scores.append(score)
     return cluster_range, scores
 
-def create_customer_and_cluster_map(df, cluster_assignments, depot_lat, depot_lon):
+# Function for DBSCAN clustering using a distance matrix
+def run_dbscan_with_matrix(dmatrix, eps=0.01, min_samples=5):
     """
-    Create an interactive map showing customers and cluster areas.
+    Perform DBSCAN clustering using a precomputed distance matrix.
+    """
+    dbscan = DBSCAN(eps=eps, min_samples=min_samples, metric="precomputed")
+    cluster_labels = dbscan.fit_predict(dmatrix)
+    return cluster_labels
+
+# Function for visualizing clustering results with cluster clouds
+def create_customer_and_cluster_map_with_clouds(df, cluster_assignments, depot_lat, depot_lon, method):
+    """
+    Create an interactive map showing customers and cluster areas for a given clustering method.
     """
     df["Cluster"] = cluster_assignments
 
@@ -35,19 +50,21 @@ def create_customer_and_cluster_map(df, cluster_assignments, depot_lat, depot_lo
     m = folium.Map(location=[depot_lat, depot_lon], zoom_start=8)
 
     # Assign unique colors for companies
-    company_colors = ['blue', 'green', 'purple', 'orange', 'darkred', 'darkblue']
+    company_colors = ['blue', 'green', 'purple', 'orange', 'darkred', 'darkblue', 'cadetblue', 'lightgreen']
     company_color_map = {company: company_colors[i % len(company_colors)] for i, company in enumerate(df["name"].unique())}
 
     # Add all customers to the map
     for _, row in df.iterrows():
         folium.Marker(
             location=[row["lat"], row["lon"]],
-            popup=f"Customer of {row['name']} (Cluster {row['Cluster']})",
+            popup=f"Customer of {row['name']} (Cluster {row['Cluster']}) [{method}]",
             icon=folium.Icon(color=company_color_map[row["name"]])
         ).add_to(m)
 
-    # Draw cluster clouds
+    # Draw cluster clouds for valid clusters
     for cluster_id in df["Cluster"].unique():
+        if cluster_id == -1:  # Skip noise in DBSCAN
+            continue
         cluster_data = df[df["Cluster"] == cluster_id]
         cluster_center = cluster_data[["lat", "lon"]].mean().values
         distances = np.linalg.norm(cluster_data[["lat", "lon"]].values - cluster_center, axis=1) * 111000  # Approximate meters
@@ -58,7 +75,7 @@ def create_customer_and_cluster_map(df, cluster_assignments, depot_lat, depot_lo
             color="black",
             fill=True,
             fill_opacity=0.2,
-            popup=f"Cluster {cluster_id}"
+            popup=f"Cluster {cluster_id} ({method})"
         ).add_to(m)
 
     # Add depot marker
@@ -70,47 +87,103 @@ def create_customer_and_cluster_map(df, cluster_assignments, depot_lat, depot_lo
 
     return m
 
-# Sidebar options with default depot values
-st.sidebar.title("Clustering Parameters")
-max_clusters = st.sidebar.slider("Max Clusters", 2, 15, 10)
-depot_lat = st.sidebar.number_input("Depot Latitude", value=52.16521, step=0.01)  # Default depot latitude
-depot_lon = st.sidebar.number_input("Depot Longitude", value=5.17215, step=0.01)  # Default depot longitude
+# Function to calculate partnership rankings
+def calculate_partnership_rankings(df, cluster_column):
+    """
+    Calculate rankings for partnerships based on shared clusters.
+    """
+    partnerships = {}
+    for name1 in df["name"].unique():
+        for name2 in df["name"].unique():
+            if name1 < name2:  # Avoid duplicate pairs
+                shared_clusters = len(
+                    set(df[df["name"] == name1][cluster_column]).intersection(
+                        set(df[df["name"] == name2][cluster_column])
+                    )
+                )
+                partnerships[frozenset([name1, name2])] = shared_clusters
+    partnerships = sorted(partnerships.items(), key=lambda x: x[1], reverse=True)
+    partnership_df = pd.DataFrame(
+        [(list(p)[0], list(p)[1], score) for p, score in partnerships],
+        columns=["Company A", "Company B", f"Shared Clusters ({cluster_column})"]
+    )
+    return partnership_df
 
 # Main app
+st.sidebar.title("Clustering Parameters")
+
+# Calculate silhouette scores
+cluster_range, silhouette_scores = calculate_silhouette_scores(df[["lat", "lon"]].values, max_clusters=15)
+optimal_n_clusters = cluster_range[np.argmax(silhouette_scores)]
+
+# Sidebar slider with default set to optimal clusters
+max_clusters = st.sidebar.slider("Max Clusters (K-Means)", 2, 15, optimal_n_clusters)
+# Adjust eps slider based on distance matrix max value
+max_distance = float(dmatrix_without_depot.max().max())
+eps = st.sidebar.slider("Epsilon (DBSCAN)", 0.1, max_distance, 0.05, step=0.1)
+st.write(f"Max Distance in Matrix: {max_distance}")
+
+min_samples = st.sidebar.slider("Min Samples (DBSCAN)", 1, 10, 5)
+
+depot_lat = st.sidebar.number_input("Depot Latitude", value=52.16521, step=0.01)
+depot_lon = st.sidebar.number_input("Depot Longitude", value=5.17215, step=0.01)
+
 st.title("Clustering for Partnerships")
-st.write("### Step 2: Determine Optimal Clusters and Visualize Results")
+st.write("### K-Means and DBSCAN Clustering Results")
 
-# Clustering based on lat/lon
-st.write("#### Determining Optimal Number of Clusters")
-cluster_data = df[["lat", "lon"]].values
-cluster_range, scores = optimal_clusters(cluster_data, max_clusters=max_clusters)
+# Show silhouette scores
+st.write("#### Silhouette Scores for K-Means")
+silhouette_df = pd.DataFrame({"Clusters": cluster_range, "Silhouette Score": silhouette_scores}).set_index("Clusters")
+st.line_chart(silhouette_df)
 
-# Show Silhouette Scores
-st.write("#### Silhouette Scores")
-st.line_chart(pd.DataFrame({"Clusters": cluster_range, "Silhouette Score": scores}).set_index("Clusters"))
+# Perform K-Means clustering
+st.write("#### K-Means Clustering")
+kmeans = KMeans(n_clusters=max_clusters, random_state=42)
+kmeans_labels = kmeans.fit_predict(df[["lat", "lon"]].values)
+df["KMeans Cluster"] = kmeans_labels
 
-# Optimal number of clusters
-optimal_n = cluster_range[np.argmax(scores)]
-st.write(f"The optimal number of clusters is **{optimal_n}** based on the highest silhouette score.")
+# Perform DBSCAN clustering
+st.write("#### DBSCAN Clustering (Using Precomputed Distance Matrix)")
+dbscan_labels = run_dbscan_with_matrix(dmatrix_without_depot, eps=eps, min_samples=min_samples)
 
-# Run KMeans with optimal clusters
-kmeans = KMeans(n_clusters=optimal_n, random_state=42)
-df["Cluster"] = kmeans.fit_predict(cluster_data)
+# Ensure alignment
+if len(dbscan_labels) != len(df):
+    raise ValueError(f"DBSCAN labels length ({len(dbscan_labels)}) does not match DataFrame length ({len(df)}).")
 
-# Rank partnerships based on shared clusters
-st.write("#### Partnership Rankings")
-partnerships = {}
-for name1 in df["name"].unique():
-    for name2 in df["name"].unique():
-        if name1 < name2:
-            shared_clusters = len(set(df[df["name"] == name1]["Cluster"]).intersection(set(df[df["name"] == name2]["Cluster"])))
-            partnerships[frozenset([name1, name2])] = shared_clusters
+df["DBSCAN Cluster"] = dbscan_labels
 
-partnerships = sorted(partnerships.items(), key=lambda x: x[1], reverse=True)
-partnerships_df = pd.DataFrame([(list(p)[0], list(p)[1], score) for p, score in partnerships], columns=["Company A", "Company B", "Shared Clusters"])
-st.write(partnerships_df)
+# Visualize clustering results
+kmeans_map = create_customer_and_cluster_map_with_clouds(df, kmeans_labels, depot_lat, depot_lon, method="K-Means")
+dbscan_map = create_customer_and_cluster_map_with_clouds(df, dbscan_labels, depot_lat, depot_lon, method="DBSCAN")
 
-# Show cluster map
-st.write("#### Customer and Cluster Map")
-map = create_customer_and_cluster_map(df, kmeans.labels_, depot_lat, depot_lon)  # Pass depot coordinates
-st.components.v1.html(map._repr_html_(), height=600)
+st.write("#### K-Means Cluster Map")
+st.components.v1.html(kmeans_map._repr_html_(), height=600)
+
+st.write("#### DBSCAN Cluster Map")
+st.components.v1.html(dbscan_map._repr_html_(), height=600)
+
+# Calculate partnership rankings
+kmeans_partnerships = calculate_partnership_rankings(df, "KMeans Cluster")
+dbscan_partnerships = calculate_partnership_rankings(df, "DBSCAN Cluster")
+
+# Display partnership rankings
+st.write("#### Partnership Rankings (K-Means)")
+st.write(kmeans_partnerships)
+
+st.write("#### Partnership Rankings (DBSCAN)")
+st.write(dbscan_partnerships)
+
+# Analyze the distance matrix
+st.write("### Distance Matrix Analysis")
+st.write(f"Minimum Distance: {dmatrix_without_depot.min().min()}")
+st.write(f"Maximum Distance: {dmatrix_without_depot.max().max()}")
+
+# DBSCAN diagnostics
+st.write("### DBSCAN Diagnostics")
+unique_labels, counts = np.unique(dbscan_labels, return_counts=True)
+st.write(f"Unique Clusters (Including Noise): {len(unique_labels)}")
+st.write(f"Cluster Labels: {unique_labels}")
+st.write(f"Cluster Sizes: {dict(zip(unique_labels, counts))}")
+
+if len(unique_labels) <= 1 or (len(unique_labels) == 2 and -1 in unique_labels):
+    st.warning("DBSCAN found no clusters or only noise. Try adjusting `eps` or `min_samples`.")
