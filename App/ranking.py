@@ -16,6 +16,7 @@ import streamlit as st
 from dss import load_data
 from distancematrix import distance_matrix
 from routing import all_cvrp
+from scipy.stats import spearmanr
 from ranking_functions.ranking_minmax import get_min_max_ranking
 
 def get_mock_ranking():
@@ -95,6 +96,8 @@ def create_partnership_map(df, depot_lat, depot_lon, output_file='map.html'):
 # # print("Partnership Ranking (Min-Max Method):")
 # # print(ranking)
 
+
+### EVALUATION OF MINMAX RANKING
 # # Select top 3 and bottom 3 from the ranking
 # selected_pairs = pd.concat([ranking.head(3), ranking.tail(3)])
 
@@ -126,17 +129,20 @@ def create_partnership_map(df, depot_lat, depot_lon, output_file='map.html'):
 #         "Company B": company_b,
 #         "Heuristic Rank": row["Rank"],
 #         "Min-Max Score": row["Min_Max_Score"],
-#         "VRP Collaboration Cost": vrp_result["Total Cost"][2],  # Cost for collaboration
-#         "VRP Individual Cost (A)": vrp_result["Total Cost"][0],
-#         "VRP Individual Cost (B)": vrp_result["Total Cost"][1],
-#         "Routes Collaboration": vrp_result["Routes"][2],
-#         "Routes (A)": vrp_result["Routes"][0],
-#         "Routes (B)": vrp_result["Routes"][1]
+#         "VRP Collaboration Cost": vrp_result["Total Cost"][2]  # Cost for collaboration
 #     })
 
 # # Create DataFrame with results
 # evaluation_df = pd.DataFrame(evaluation_results)
 
+# # Compute Spearman Rank Correlation
+# heuristic_scores = evaluation_df["Min-Max Score"]
+# vrp_scores = evaluation_df["VRP Collaboration Cost"]
+
+# spearman_corr, p_value = spearmanr(heuristic_scores, vrp_scores)
+
 # # Display results
 # print("Evaluation Results (Top 3 and Bottom 3):")
 # print(evaluation_df)
+# print(f"\nSpearman Rank Correlation: {spearman_corr:.2f}")
+# print(f"P-Value: {p_value:.2e}")
