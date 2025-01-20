@@ -187,3 +187,37 @@ st.write(f"Cluster Sizes: {dict(zip(unique_labels, counts))}")
 
 if len(unique_labels) <= 1 or (len(unique_labels) == 2 and -1 in unique_labels):
     st.warning("DBSCAN found no clusters or only noise. Try adjusting `eps` or `min_samples`.")
+
+st.write(f"Max Distance: {dmatrix_without_depot.max().max()}")
+st.write(f"Mean Distance: {dmatrix_without_depot.mean().mean()}")
+unique_labels = set(dbscan_labels)
+cluster_sizes = {label: (dbscan_labels == label).sum() for label in unique_labels}
+st.write(f"Unique Clusters: {len(unique_labels)}")
+st.write(f"Cluster Sizes: {cluster_sizes}")
+
+
+# Calculate silhouette score for DBSCAN if valid
+st.write("#### Silhouette Score for DBSCAN")
+unique_labels_dbscan = set(dbscan_labels)
+
+if len(unique_labels_dbscan) > 1:  # At least 2 clusters required
+    silhouette_dbscan = silhouette_score(dmatrix_without_depot, dbscan_labels, metric="precomputed")
+    st.write(f"Silhouette Score (DBSCAN): {silhouette_dbscan}")
+else:
+    st.warning("Silhouette Score for DBSCAN cannot be computed. DBSCAN found only one cluster or noise.")
+
+# Calculate silhouette score for K-Means
+st.write("#### Silhouette Scores for K-Means")
+max_silhouette_score = max(silhouette_scores)
+optimal_clusters = cluster_range[silhouette_scores.index(max_silhouette_score)]
+st.write(f"Maximum Silhouette Score for K-Means: {max_silhouette_score:.4f} (Optimal Clusters: {optimal_clusters})")
+
+
+st.write(f"K-Means Clusters: {len(set(kmeans_labels))}")
+st.write(f"DBSCAN Clusters (excluding noise): {len(set(dbscan_labels)) - (-1 in dbscan_labels)}")
+
+# Plot comparison of K-Means and DBSCAN cluster assignments
+st.write("### Clustering Comparison")
+comparison_df = df[["lat", "lon", "KMeans Cluster", "DBSCAN Cluster"]]
+st.map(comparison_df)
+
