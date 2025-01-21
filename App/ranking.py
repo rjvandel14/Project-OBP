@@ -192,8 +192,8 @@ vrp_scores_kmeans = evaluation_df_kmeans["VRP Collaboration Saving Cost"]
 
 spearman_corr_kmeans, p_value_kmeans = spearmanr(heuristic_scores_kmeans, vrp_scores_kmeans)
 
-# Display results
-print("Evaluation Results (Top 3 and Bottom 3) for K-Means Ranking:")
-print(evaluation_df_kmeans)
-print(f"\nSpearman Rank Correlation for K-Means Ranking: {spearman_corr_kmeans:.2f}")
-print(f"P-Value: {p_value_kmeans:.2e}")
+# # Display results
+# print("Evaluation Results (Top 3 and Bottom 3) for K-Means Ranking:")
+# print(evaluation_df_kmeans)
+# print(f"\nSpearman Rank Correlation for K-Means Ranking: {spearman_corr_kmeans:.2f}")
+# print(f"P-Value: {p_value_kmeans:.2e}")
