@@ -107,14 +107,15 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
         if results:
             # Always display results if they exist
             with st.expander(f"Analysis Results for {row['Company A']} ↔ {row['Company B']}, result may be suboptimal because of time limit ", expanded=True):
-                cost_a = results["Total Cost"][0]
-                cost_b = results["Total Cost"][1]
-                cost_collab = results["Total Cost"][2]
-                st.write(f"**Results:**")
-                st.write(f"Cost for {row['Company A']}: {cost_a}")
-                st.write(f"Cost for {row['Company B']}: {cost_b}")
-                st.write(f"Cost for collaboration: {cost_collab}")
-                st.write(f"Total savings: {cost_a + cost_b - cost_collab}")
+                total_cost_a = results["Total Cost"][0]
+                total_cost_b = results["Total Cost"][1]
+                total_cost_collab = results["Total Cost"][2]
+
+                st.write(f'{row["Company A"]}: Total costs {total_cost_a}, Fixed truck costs {results["Truck Cost"][0]}, Kilometer costs {results["Driving Cost"][0]}')
+                st.write(f'{row["Company A"]}: Total costs {total_cost_b}, Fixed truck costs {results["Truck Cost"][1]}, Kilometer costs {results["Driving Cost"][1]}')
+                st.write(f'Collaboration: Total costs {total_cost_collab}, Fixed truck costs {results["Truck Cost"][2]}, Kilometer costs {results["Driving Cost"][2]}')
+                st.write(f"Total savings: {total_cost_a + total_cost_b - total_cost_collab}")
+
 
     # Callback to handle "Show More" button
     def show_more_callback():
