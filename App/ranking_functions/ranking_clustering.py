@@ -13,7 +13,8 @@ from dss import load_data
 from distancematrix import distance_matrix
 
 # Load data and distance matrix
-df = load_data('C:/Users/daydo/Documents/GitHub/Project-OBP/Data/medium.csv')
+# df = load_data('C:/Users/daydo/Documents/GitHub/Project-OBP/Data/medium.csv')
+df = load_data('C:/Users/malou/OneDrive/Documenten/VU/Business Analytics/YEAR 1 - 2024-2025 (Mc)/Project Optimization of Business Processes/Project-OBP/Data/mini.csv')
 dmatrix = distance_matrix(df)  # Precomputed distance matrix
 
 # Exclude depot row/column from the distance matrix
@@ -221,3 +222,79 @@ st.write("### Clustering Comparison")
 comparison_df = df[["lat", "lon", "KMeans Cluster", "DBSCAN Cluster"]]
 st.map(comparison_df)
 
+
+
+def calculate_optimal_clusters(data, max_clusters=10):
+    """
+    Calculate the optimal number of clusters using the silhouette score.
+
+    Parameters:
+    - data (pd.DataFrame): DataFrame with customer locations (latitude and longitude).
+    - max_clusters (int): Maximum number of clusters to evaluate.
+
+    Returns:
+    - int: Optimal number of clusters based on the highest silhouette score.
+    """
+    scores = []
+    cluster_range = range(2, max_clusters + 1)
+    for n_clusters in cluster_range:
+        kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+        cluster_labels = kmeans.fit_predict(data)
+        score = silhouette_score(data, cluster_labels)
+        scores.append((n_clusters, score))
+    
+    # Find the number of clusters with the maximum silhouette score
+    optimal_n_clusters = max(scores, key=lambda x: x[1])[0]
+    return optimal_n_clusters
+
+def get_cluster_kmeans(df, max_clusters=10):
+    """
+    Computes a ranking table for collaborations using K-Means clustering
+    with an optimal number of clusters determined by silhouette score.
+
+    Parameters:
+    - df (pd.DataFrame): DataFrame with company and customer data. Must include 'name', 'lat', and 'lon' columns.
+    - max_clusters (int): Maximum number of clusters to evaluate.
+
+    Returns:
+    - pd.DataFrame: A ranking table with columns ['Rank', 'Company A', 'Company B', 'Shared_Clusters'].
+    """
+    # Calculate the optimal number of clusters
+    optimal_n_clusters = calculate_optimal_clusters(df[["lat", "lon"]], max_clusters)
+
+    # Apply K-Means clustering
+    kmeans = KMeans(n_clusters=optimal_n_clusters, random_state=42)
+    df["KMeans Cluster"] = kmeans.fit_predict(df[["lat", "lon"]])
+
+    # Calculate shared clusters between companies
+    partnership_scores = []
+    company_names = df['name'].unique()  # Extract unique company names
+
+    for i, company1 in enumerate(company_names):
+        for j, company2 in enumerate(company_names):
+            if i < j:  # Ensure each pair is only processed once
+                # Get clusters for both companies
+                clusters1 = set(df[df['name'] == company1]["KMeans Cluster"])
+                clusters2 = set(df[df['name'] == company2]["KMeans Cluster"])
+
+                # Count shared clusters
+                shared_clusters = len(clusters1.intersection(clusters2))
+
+                # Append the result
+                partnership_scores.append({
+                    'Company A': company1,
+                    'Company B': company2,
+                    'Shared_Clusters': shared_clusters
+                })
+
+    # Create the DataFrame
+    partnership_df = pd.DataFrame(partnership_scores)
+
+    # Sort by shared clusters in descending order
+    partnership_df = partnership_df.sort_values('Shared_Clusters', ascending=False).reset_index(drop=True)
+
+    # Add a ranking column
+    partnership_df['Rank'] = partnership_df.index + 1
+
+    # Reorder columns for clarity
+    return partnership_df[['Rank', 'Company A', 'Company B', 'Shared_Clusters']], optimal_n_clusters
