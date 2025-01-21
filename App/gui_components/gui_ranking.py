@@ -4,20 +4,28 @@ from ranking_functions.ranking_minmax import get_min_max_ranking
 from ranking_functions.ranking_clustering import get_cluster_kmeans
 from routing import all_cvrp
 
-def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, selected_company):
+def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_truck):
     """Generates and displays the ranking data."""
 
     #ranking_data = get_min_max_ranking(dmatrix, data)
     ranking_data = get_cluster_kmeans(data)
 
     # Display the ranked collaborations
-    st.subheader("Ranked Collaborations")
+    # Create two columns: one for the title and the other for the filter options
+    col1, col2 = st.columns([2, 1]) 
+    
+    with col1:
+        st.subheader("Ranked Collaborations")
 
-    if selected_company != "All":
-        ranking_data = ranking_data[
-            (ranking_data['Company A'] == selected_company) | 
-            (ranking_data['Company B'] == selected_company)
-        ]
+    # Display the filter options in the second column
+    with col2:
+        companies = sorted(sorted(data["name"].unique()))
+        selected_company = st.selectbox("Select a company to filter", ["All"] + companies)
+        if selected_company != "All":
+            ranking_data = ranking_data[
+                (ranking_data['Company A'] == selected_company) | 
+                (ranking_data['Company B'] == selected_company)
+            ]
 
     # Initialize session state variables
     if "rows_to_display" not in st.session_state:
@@ -49,9 +57,29 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
     # Decide how many rows to display
     rows_to_display = ranking_data.head(st.session_state.rows_to_display)
 
-    # Iterate through the rows and display them with toggle buttons and checkboxes
+    #Show headers
+    col1, col2, col3, col4, col5 = st.columns([1, 2, 2, 2, 1.5])  # Adjust column widths
+
+    with col1:
+        st.markdown("**Rank**")
+
+    with col2:
+        st.markdown("**Company A**")
+
+    with col3:
+        st.markdown("**Company B**")
+
+    with col4:
+        st.markdown("**Analysis**")
+
+    with col5:
+        st.markdown("**Shorter Calculations**")
+
+    st.markdown("<hr style='border: 1px solid #ccc; margin-top: -10px; margin-bottom: 10px;'>", unsafe_allow_html=True)
+
+    #Loop trough rows to show data
     for index, row in rows_to_display.iterrows():
-        col1, col2, col3, col4, col5 = st.columns([1, 3, 3, 2, 3])  # Adjust column widths
+        col1, col2, col3, col4, col5 = st.columns([1, 2, 2, 2, 1.5])  # Adjust column widths
 
         with col1:
             st.write(f"{row['Rank']}")  # Display the rank
@@ -78,10 +106,12 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
 
             # Use Streamlit's checkbox widget
             st.session_state.checkbox_states[f"checkbox_{index}"] = st.checkbox(
-                f"Time limited calculation",
+                f"",
                 key=f"checkbox_{index}",
                 value=st.session_state.checkbox_states[f"checkbox_{index}"]
             )
+
+        st.markdown("<hr style='border: 1px solid #ccc; margin-top: -10px; margin-bottom: 10px;'>", unsafe_allow_html=True)
 
         # Show or hide analysis based on the toggle state
         timelimit = st.session_state.checkbox_states.get(f"checkbox_{index}", False)
