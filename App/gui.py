@@ -27,7 +27,7 @@ vehicle_capacity, cost_per_km, fixed_cost_per_truck, data = render_sidebar()
 if data is not None:
 
     dmatrix = OSRM(data)
-    render_ranking(dmatrix, data,vehicle_capacity, cost_per_km, fixed_cost_per_truck, selected_company)
+    render_ranking(dmatrix, data,vehicle_capacity, cost_per_km, fixed_cost_per_truck)
 
     # Analyze collaboration
     render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, dmatrix)
