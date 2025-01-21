@@ -112,7 +112,7 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
                 total_cost_collab = results["Total Cost"][2]
 
                 st.write(f'{row["Company A"]}: Total costs {total_cost_a}, Fixed truck costs {results["Truck Cost"][0]}, Kilometer costs {results["Driving Cost"][0]}')
-                st.write(f'{row["Company A"]}: Total costs {total_cost_b}, Fixed truck costs {results["Truck Cost"][1]}, Kilometer costs {results["Driving Cost"][1]}')
+                st.write(f'{row["Company B"]}: Total costs {total_cost_b}, Fixed truck costs {results["Truck Cost"][1]}, Kilometer costs {results["Driving Cost"][1]}')
                 st.write(f'Collaboration: Total costs {total_cost_collab}, Fixed truck costs {results["Truck Cost"][2]}, Kilometer costs {results["Driving Cost"][2]}')
                 st.write(f"Total savings: {total_cost_a + total_cost_b - total_cost_collab}")
 
