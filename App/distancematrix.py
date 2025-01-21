@@ -2,8 +2,9 @@ import pandas as pd
 import math
 import seaborn as sns
 import matplotlib.pyplot as plt
+import requests
 
-#from dss import df
+from dss import df
 from dss import depot_lat
 from dss import depot_lon
 
@@ -68,3 +69,39 @@ def plot_heat_dist(matrix):
 
 #dmatrix = distance_matrix(df)
 #plot_heat_dist(dmatrix)
+
+def OSRM(df):
+    # Voeg het depot toe aan de DataFrame als eerste rij en kolom
+    depot_row = pd.DataFrame({'name': ['Depot'], 'lat': [depot_lat], 'lon': [depot_lon]})
+    df = pd.concat([depot_row, df], ignore_index=True)
+
+    osrm_url = 'http://router.project-osrm.org/table/v1/driving/'
+
+    # Locaties voorbereiden als lon, lat (let op volgorde: lon, lat voor OSRM)
+    coordinates = ';'.join(df.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
+
+    # API-call maken voor de afstanden
+    response = requests.get(f"{osrm_url}{coordinates}?annotations=distance")
+
+    if response.status_code == 200:
+        try:
+            data = response.json()
+            if 'distances' in data:
+            # Maak de afstandsmatrix
+                distance_matrix = pd.DataFrame(data['distances'], index=df['name'], columns=df['name'])
+                distance_matrix = distance_matrix / 1000  # Nu in kilometers
+            
+                # Rond de waarden af op 1 decimaal
+                distance_matrix = distance_matrix.round(1)
+                return distance_matrix
+            else:
+                print("Fout: Geen 'distances' veld in de response.")
+        except ValueError:
+            print("Fout: Geen geldige JSON ontvangen van de OSRM-server.")
+    else:
+        print(f"Fout: De server reageerde met status code {response.status_code}")
+        print(response.text)
+
+
+dmatrix = OSRM(df)
+plot_heat_dist(dmatrix)
