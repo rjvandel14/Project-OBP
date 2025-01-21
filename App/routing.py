@@ -73,9 +73,9 @@ def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, com
         data = pd.concat([data[~data['name'].isin(collaborating_companies)], collaboration_data])
     
     if timelimit:
-        timelimit = 10 #+ len(collaboration_data['name'])
+        timelimit = 10 + 0.5 * len(collaboration_data['name'])
 
-    # Solve VRP for individual companies
+    # Solve VRP for individual companies    
     cost_a, route_a = solve_vrp(company1_data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, dmatrix, timelimit)
     cost_b, route_b = solve_vrp(company2_data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, dmatrix, timelimit)
 
