@@ -1,5 +1,12 @@
 import pandas as pd
 
+# import sys
+# import os
+# # Load your custom functions
+# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# from dss import load_data
+# from distancematrix import distance_matrix
+
 def get_min_max_ranking(dmatrix, df):
     """
     Computes a ranking table for collaborations using the min-max method.
@@ -53,3 +60,10 @@ def get_min_max_ranking(dmatrix, df):
 
     # Reorder columns for clarity
     return partnership_df[['Rank', 'Company A', 'Company B', 'Min_Max_Score']]
+
+
+# df = load_data('../Data/mini.csv')
+# dmatrix = distance_matrix(df)  # Precomputed distance matrix
+# ranking = get_min_max_ranking(dmatrix,df)
+# print("RANKING")
+# print(ranking)

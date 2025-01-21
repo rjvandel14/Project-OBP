@@ -1,12 +1,14 @@
 import streamlit as st
 import pandas as pd
 from ranking_functions.ranking_minmax import get_min_max_ranking
+from ranking_functions.ranking_clustering import get_cluster_kmeans
 from routing import all_cvrp
 
 def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, selected_company):
     """Generates and displays the ranking data."""
 
-    ranking_data = get_min_max_ranking(dmatrix, data)
+    #ranking_data = get_min_max_ranking(dmatrix, data)
+    ranking_data = get_cluster_kmeans(data)
 
     # Display the ranked collaborations
     st.subheader("Ranked Collaborations")
