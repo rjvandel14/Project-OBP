@@ -21,7 +21,7 @@ from distancematrix import OSRM
 st.title("Logistics Collaboration Dashboard")
 
 # Sidebar inputs and dataset
-vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, selected_company = render_sidebar()
+vehicle_capacity, cost_per_km, fixed_cost_per_truck, data = render_sidebar()
 
 # Display rankings
 if data is not None:

@@ -41,11 +41,7 @@ def render_sidebar():
     # Load the data
     data = load_data(data=data)
 
-    # Filter section
-    st.sidebar.subheader("Filter Options")
-    companies = sorted(sorted(data["name"].unique()))
-    selected_company = st.sidebar.selectbox("Select a company to filter", ["All"] + companies)
-
+    
 
     # if st.session_state.uploaded_file is not None:
     #     try:
@@ -62,4 +58,4 @@ def render_sidebar():
     #     except Exception as e:
     #         st.sidebar.error(f"Error loading predefined file: {e}")
 
-    return vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, selected_company
+    return vehicle_capacity, cost_per_km, fixed_cost_per_truck, data
