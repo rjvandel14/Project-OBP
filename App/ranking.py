@@ -17,10 +17,6 @@ from dss import load_data
 from distancematrix import distance_matrix
 from routing import all_cvrp
 from scipy.stats import spearmanr
-from dss import load_data
-from distancematrix import distance_matrix
-from routing import all_cvrp
-from scipy.stats import spearmanr
 from ranking_functions.ranking_minmax import get_min_max_ranking
 from ranking_functions.ranking_clustering import get_cluster_kmeans
 from ranking_functions.ranking_dbscan import get_dbscan_ranking
@@ -89,8 +85,8 @@ def create_partnership_map(df, depot_lat, depot_lon, output_file='map.html'):
 # depot_lon = 5.17215
 # # create_partnership_map(df, depot_lat, depot_lon, output_file='partnership_map.html')
 
-# df = load_data('../Data/minio.csv')
-# dmatrix = distance_matrix(df)
+df = load_data('../Data/minio.csv')
+dmatrix = distance_matrix(df)
 
 rankingminmax = get_min_max_ranking(dmatrix, df)
 
