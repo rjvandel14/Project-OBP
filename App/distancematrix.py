@@ -4,7 +4,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import requests
 
-from dss import df
 from dss import depot_lat
 from dss import depot_lon
 
@@ -103,5 +102,5 @@ def OSRM(df):
         print(response.text)
 
 
-dmatrix = OSRM(df)
-plot_heat_dist(dmatrix)
+#dmatrix = OSRM(df)
+#plot_heat_dist(dmatrix)
