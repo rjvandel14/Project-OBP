@@ -21,13 +21,13 @@ from distancematrix import distance_matrix
 st.title("Logistics Collaboration Dashboard")
 
 # Sidebar inputs and dataset
-vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, selected_company = render_sidebar()
+vehicle_capacity, cost_per_km, fixed_cost_per_truck, data = render_sidebar()
 
 # Display rankings
 if data is not None:
 
     dmatrix = distance_matrix(data)
-    render_ranking(dmatrix, data,vehicle_capacity, cost_per_km, fixed_cost_per_truck, selected_company)
+    render_ranking(dmatrix, data,vehicle_capacity, cost_per_km, fixed_cost_per_truck)
 
     # Analyze collaboration
     render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, dmatrix)
