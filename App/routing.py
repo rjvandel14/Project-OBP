@@ -95,7 +95,7 @@ def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, com
 # Plots a map with the CVRP routes
 def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes = None, output_file='map.html'):
     # Create a Folium map centered at the depot
-    m = folium.Map(location=[depot_lat, depot_lon], zoom_start=12)
+    m = folium.Map(location=[depot_lat, depot_lon], zoom_start=7)
 
     # Add the depot marker
     folium.Marker(
