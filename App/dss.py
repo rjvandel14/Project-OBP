@@ -39,6 +39,6 @@ def load_data(file_path=None, data=None):
 #df = load_data('../Data/medium.csv')
 
 ## USE YOUR OWN FILE PATH 
-df = load_data('C:/Users/malou/OneDrive/Documenten/VU/Business Analytics/YEAR 1 - 2024-2025 (Mc)/Project Optimization of Business Processes/Project-OBP/Data/mini.csv')
+#df = load_data('C:/Users/malou/OneDrive/Documenten/VU/Business Analytics/YEAR 1 - 2024-2025 (Mc)/Project Optimization of Business Processes/Project-OBP/Data/mini.csv')
 
 
