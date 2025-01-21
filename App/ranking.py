@@ -19,6 +19,7 @@ from routing import all_cvrp
 from scipy.stats import spearmanr
 from ranking_functions.ranking_minmax import get_min_max_ranking
 from ranking_functions.ranking_clustering import get_cluster_kmeans
+from ranking_functions.ranking_dbscan import get_dbscan_ranking
 
 def get_mock_ranking():
     """
@@ -197,3 +198,8 @@ spearman_corr_kmeans, p_value_kmeans = spearmanr(heuristic_scores_kmeans, vrp_sc
 # print(evaluation_df_kmeans)
 # print(f"\nSpearman Rank Correlation for K-Means Ranking: {spearman_corr_kmeans:.2f}")
 # print(f"P-Value: {p_value_kmeans:.2e}")
+
+
+eps = 0.5
+min_samples = 2
+ranking_dbscan = get_dbscan_ranking(df, dmatrix, eps, min_samples)

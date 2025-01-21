@@ -15,11 +15,11 @@ from distancematrix import distance_matrix
 # Load data and distance matrix
 # df = load_data('C:/Users/daydo/Documents/GitHub/Project-OBP/Data/medium.csv')
 # df = load_data('C:/Users/malou/OneDrive/Documenten/VU/Business Analytics/YEAR 1 - 2024-2025 (Mc)/Project Optimization of Business Processes/Project-OBP/Data/mini.csv')
-df = load_data('../Data/mini.csv')
-dmatrix = distance_matrix(df)  # Precomputed distance matrix
+# df = load_data('../Data/mini.csv')
+# dmatrix = distance_matrix(df)  # Precomputed distance matrix
 
-# Exclude depot row/column from the distance matrix
-dmatrix_without_depot = dmatrix.iloc[1:, 1:]  # Assuming the depot is the first row/column
+# # Exclude depot row/column from the distance matrix
+# dmatrix_without_depot = dmatrix.iloc[1:, 1:]  # Assuming the depot is the first row/column
 
 # Function to calculate Silhouette Scores for K-Means
 def calculate_silhouette_scores(data, max_clusters=10):
