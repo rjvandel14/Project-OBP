@@ -13,11 +13,13 @@
 import folium
 import pandas as pd
 import streamlit as st
-# from dss import load_data
-# from distancematrix import distance_matrix
-# from routing import all_cvrp
-# from scipy.stats import spearmanr
-# from ranking_functions.ranking_minmax import get_min_max_ranking
+from dss import load_data
+from distancematrix import compute_distance_matrix
+from routing import all_cvrp
+from scipy.stats import spearmanr
+from ranking_functions.ranking_minmax import get_min_max_ranking
+from ranking_functions.ranking_clustering import get_cluster_kmeans
+from ranking_functions.ranking_dbscan import get_dbscan_ranking
 
 def get_mock_ranking():
     """
@@ -85,8 +87,8 @@ def create_partnership_map(df, depot_lat, depot_lon, output_file='map.html'):
 
 #df = load_data('C:/Users/malou/OneDrive/Documenten/VU/Business Analytics/YEAR 1 - 2024-2025 (Mc)/Project Optimization of Business Processes/Project-OBP/Data/many.csv')
 
-#df = load_data('../Data/minio.csv')
-dmatrix = distance_matrix(df)
+df = load_data('../Data/minio.csv')
+dmatrix = compute_distance_matrix(df)
 
 rankingminmax = get_min_max_ranking(dmatrix, df)
 
