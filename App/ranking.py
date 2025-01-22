@@ -85,7 +85,9 @@ def create_partnership_map(df, depot_lat, depot_lon, output_file='map.html'):
 # depot_lon = 5.17215
 # # create_partnership_map(df, depot_lat, depot_lon, output_file='partnership_map.html')
 
-df = load_data('../Data/minio.csv')
+#df = load_data('C:/Users/malou/OneDrive/Documenten/VU/Business Analytics/YEAR 1 - 2024-2025 (Mc)/Project Optimization of Business Processes/Project-OBP/Data/many.csv')
+
+#df = load_data('../Data/minio.csv')
 dmatrix = distance_matrix(df)
 
 rankingminmax = get_min_max_ranking(dmatrix, df)
@@ -101,7 +103,7 @@ rankingminmax = get_min_max_ranking(dmatrix, df)
 
 ## EVALUATION OF MINMAX RANKING
 # Select top 3 and bottom 3 from the ranking
-# selected_pairs = pd.concat([ranking.head(3), ranking.tail(3)])
+# selected_pairs = pd.concat([rankingminmax.head(3), rankingminmax.tail(3)])
 
 # # Define parameters for VRP
 # vehicle_capacity = 20  # Example vehicle capacity
@@ -131,7 +133,7 @@ rankingminmax = get_min_max_ranking(dmatrix, df)
 #         "Company B": company_b,
 #         "Heuristic Rank": row["Rank"],
 #         "Min-Max Score": row["Min_Max_Score"],
-#         "VRP Collaboration Cost": vrp_result["Total Cost"][2]  # Cost for collaboration
+#         "VRP Collaboration Saving Cost": vrp_result["Total Cost"][0] + vrp_result["Total Cost"][1] - vrp_result["Total Cost"][2]  # Cost for collaboration
 #     })
 
 # # Create DataFrame with results
@@ -139,7 +141,7 @@ rankingminmax = get_min_max_ranking(dmatrix, df)
 
 # # Compute Spearman Rank Correlation
 # heuristic_scores = evaluation_df["Min-Max Score"]
-# vrp_scores = evaluation_df["VRP Collaboration Cost"]
+# vrp_scores = evaluation_df["VRP Collaboration Saving Cost"]
 
 # spearman_corr, p_value = spearmanr(heuristic_scores, vrp_scores)
 
@@ -148,3 +150,110 @@ rankingminmax = get_min_max_ranking(dmatrix, df)
 # print(evaluation_df)
 # print(f"\nSpearman Rank Correlation: {spearman_corr:.2f}")
 # print(f"P-Value: {p_value:.2e}")
+
+# # GENERATE THE K-MEAN RANKING
+# rankingclusterkmeans = get_cluster_kmeans(df, max_clusters=10)
+
+# # Select top 3 and bottom 3 from the K-Means ranking
+# selected_pairs_kmeans = pd.concat([rankingclusterkmeans.head(3), rankingclusterkmeans.tail(3)])
+
+# # Define parameters for VRP
+# vehicle_capacity = 20  # Example vehicle capacity
+# cost_per_km = 1        # Cost per kilometer
+# fixed_cost_per_truck = 1  # Fixed cost for each truck
+
+# # Evaluate VRP for selected pairs
+# evaluation_results_kmeans = []
+# for _, row in selected_pairs_kmeans.iterrows():
+#     company_a = row["Company A"]
+#     company_b = row["Company B"]
+    
+#     # Solve VRP for the selected companies using all_cvrp
+#     vrp_result = all_cvrp(
+#         vehicle_capacity=vehicle_capacity,
+#         cost_per_km=cost_per_km,
+#         fixed_cost_per_truck=fixed_cost_per_truck,
+#         company_a=company_a,
+#         company_b=company_b,
+#         data=df,
+#         dmatrix=dmatrix
+#     )
+    
+#     # Append results
+#     evaluation_results_kmeans.append({
+#         "Company A": company_a,
+#         "Company B": company_b,
+#         "Heuristic Rank": row["Rank"],
+#         "Shared Clusters": row["Shared_Clusters"],
+#         "VRP Collaboration Saving Cost": vrp_result["Total Cost"][0] + vrp_result["Total Cost"][1] - vrp_result["Total Cost"][2]  # Cost for collaboration
+#     })
+
+# # Create DataFrame with results
+# evaluation_df_kmeans = pd.DataFrame(evaluation_results_kmeans)
+
+# # Compute Spearman Rank Correlation for K-Means rankings
+# heuristic_scores_kmeans = evaluation_df_kmeans["Shared Clusters"]
+# vrp_scores_kmeans = evaluation_df_kmeans["VRP Collaboration Saving Cost"]
+
+# spearman_corr_kmeans, p_value_kmeans = spearmanr(heuristic_scores_kmeans, vrp_scores_kmeans)
+
+# # Display results
+# print("Evaluation Results (Top 3 and Bottom 3) for K-Means Ranking:")
+# print(evaluation_df_kmeans)
+# print(f"\nSpearman Rank Correlation for K-Means Ranking: {spearman_corr_kmeans:.2f}")
+# print(f"P-Value: {p_value_kmeans:.2e}")
+
+# GENERATE THE DBSCAN RANKING
+dmatrix_without_depot = dmatrix.drop(index='Depot', columns='Depot')
+eps = 98
+min_samples = 12
+rankingclusterdbscan = get_dbscan_ranking(df, dmatrix_without_depot, eps, min_samples)
+
+# Select top 3 and bottom 3 from the K-Means ranking
+selected_pairs_dbcscan = pd.concat([rankingclusterdbscan.head(3), rankingclusterdbscan.tail(3)])
+
+# Define parameters for VRP
+vehicle_capacity = 20  # Example vehicle capacity
+cost_per_km = 1        # Cost per kilometer
+fixed_cost_per_truck = 1  # Fixed cost for each truck
+
+# Evaluate VRP for selected pairs
+evaluation_results_dbscan = []
+for _, row in selected_pairs_dbcscan.iterrows():
+    company_a = row["Company A"]
+    company_b = row["Company B"]
+    
+    # Solve VRP for the selected companies using all_cvrp
+    vrp_result = all_cvrp(
+        vehicle_capacity=vehicle_capacity,
+        cost_per_km=cost_per_km,
+        fixed_cost_per_truck=fixed_cost_per_truck,
+        company_a=company_a,
+        company_b=company_b,
+        data=df,
+        dmatrix=dmatrix 
+    )
+    
+    # Append results
+    evaluation_results_dbscan.append({
+        "Company A": company_a,
+        "Company B": company_b,
+        "Heuristic Rank": row["Rank"],
+        "Shared Clusters": row["Shared_Clusters"],
+        "VRP Collaboration Saving Cost": vrp_result["Total Cost"][0] + vrp_result["Total Cost"][1] - vrp_result["Total Cost"][2]  # Cost for collaboration
+    })
+
+# Create DataFrame with results
+evaluation_df_dbscan = pd.DataFrame(evaluation_results_dbscan)
+
+# Compute Spearman Rank Correlation for K-Means rankings
+heuristic_scores_dbscan = evaluation_df_dbscan["Shared Clusters"]
+vrp_scores_dbscan = evaluation_df_dbscan["VRP Collaboration Saving Cost"]
+
+spearman_corr_dbscan, p_value_dbscan = spearmanr(heuristic_scores_dbscan, vrp_scores_dbscan)
+
+# Display results
+print("Evaluation Results (Top 3 and Bottom 3) for DBSCAN Ranking:")
+print(evaluation_df_dbscan)
+print(f"\nSpearman Rank Correlation for DBSCAN Ranking: {spearman_corr_dbscan:.2f}")
+print(f"P-Value: {p_value_dbscan:.2e}")
