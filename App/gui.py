@@ -15,7 +15,7 @@ import streamlit as st
 from gui_components.gui_sidebar import render_sidebar
 from gui_components.gui_ranking import render_ranking
 from gui_components.gui_analysis import render_analysis
-from distancematrix import OSRM
+from distancematrix import compute_distance_matrix
 
 # Title
 st.title("Logistics Collaboration Dashboard")
@@ -26,7 +26,7 @@ vehicle_capacity, cost_per_km, fixed_cost_per_truck, data = render_sidebar()
 # Display rankings
 if data is not None:
 
-    dmatrix = OSRM(data)
+    dmatrix = compute_distance_matrix(data)
     render_ranking(dmatrix, data,vehicle_capacity, cost_per_km, fixed_cost_per_truck)
 
     # Analyze collaboration

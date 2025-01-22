@@ -6,101 +6,88 @@ import requests
 
 from dss import depot_lat
 from dss import depot_lon
-
-# cd app
-# Lees het Excel-bestand in
+from dss import load_data
 
 def haversine(lat1, lon1, lat2, lon2):
-    R = 6371  # Straal van de aarde in kilometers
-    phi1 = math.radians(lat1)
-    phi2 = math.radians(lat2)
+    R = 6371  # Radius of the Earth in kilometers
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
     delta_phi = math.radians(lat2 - lat1)
     delta_lambda = math.radians(lon2 - lon1)
 
     a = math.sin(delta_phi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
-    return R * c  # Afstand in kilometers
+    return R * c  # Distance in kilometers
 
-def distance_matrix(df):
-    # Voeg het depot als eerste rij en kolom toe aan de dataframe
-    depot_row = pd.DataFrame({'name': ['Depot'], 'lat': [depot_lat], 'lon': [depot_lon]})
-    df2 = pd.concat([depot_row, df], ignore_index=True)
-
-    # Maak een lege lijst voor de volledige afstandsmatrix (inclusief depot)
-    full_distance_matrix = []
-
-    # Bereken de afstanden tussen het depot en alle klanten (inclusief depot zelf)
-    coordinates = df2[['lat', 'lon']].values
-
-    # Bereken de afstand van het depot naar elke klant en tussen klanten onderling
-    for i in range(len(coordinates)):
-        row = []
-        for j in range(len(coordinates)):
-            if i == j:
-                row.append(0)  # Afstand van klant naar zichzelf is 0
-            else:
-                distance = haversine(coordinates[i][0], coordinates[i][1], coordinates[j][0], coordinates[j][1])
-                row.append(distance)
-        full_distance_matrix.append(row)
-
-    # Converteer de afstandsmatrix naar een Pandas DataFrame voor eenvoudiger manipulatie
-    customer_distance_df = pd.DataFrame(full_distance_matrix, columns=df2['name'], index=df2['name'])
-
-    # Afronden van de waarden in de DataFrame naar het dichtstbijzijnde gehele getal
-    customer_distance_df = customer_distance_df.round(1)
-
-    # Resultaten tonen
-    return customer_distance_df
-
-def plot_heat_dist(matrix):
-    # Plot de heatmap van de afstandsmatrix
-    plt.figure(figsize=(12, 10))  # Vergroot de figuur voor betere leesbaarheid
-    sns.heatmap(matrix, annot=True, cmap='YlGnBu', fmt='g', annot_kws={'size': 8})  # Verklein de annotatiegrootte
-
-    # Draai de x- en y-as labels voor betere leesbaarheid
-    plt.xticks(rotation=45, ha='right')  # Draai de x-as labels
-    plt.yticks(rotation=45, va='top')    # Draai de y-as labels
-
-    plt.title('Distance matrix of depot and customers')
-    plt.tight_layout()  # Zorgt ervoor dat alles netjes past
-    plt.show()
-
-#dmatrix = distance_matrix(df)
-#plot_heat_dist(dmatrix)
-
-def OSRM(df):
-    # Voeg het depot toe aan de DataFrame als eerste rij en kolom
+def haversine_matrix(df):
     depot_row = pd.DataFrame({'name': ['Depot'], 'lat': [depot_lat], 'lon': [depot_lon]})
     df = pd.concat([depot_row, df], ignore_index=True)
 
-    osrm_url = 'http://router.project-osrm.org/table/v1/driving/'
+    coordinates = df[['lat', 'lon']].values
+    distances = pd.DataFrame(
+        [[haversine(*coordinates[i], *coordinates[j]) for j in range(len(coordinates))] 
+         for i in range(len(coordinates))],
+        index=df['name'],
+        columns=df['name']
+    )
 
-    # Locaties voorbereiden als lon, lat (let op volgorde: lon, lat voor OSRM)
+    return distances.round(1)
+
+def OSRM(data_input):
+    depot_row = pd.DataFrame({'name': ['Depot'], 'lat': [depot_lat], 'lon': [depot_lon]})
+    df = pd.concat([depot_row, data_input], ignore_index=True)
+
+    osrm_url = 'http://router.project-osrm.org/table/v1/driving/'
     coordinates = ';'.join(df.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
 
-    # API-call maken voor de afstanden
     response = requests.get(f"{osrm_url}{coordinates}?annotations=distance")
 
     if response.status_code == 200:
         try:
             data = response.json()
             if 'distances' in data:
-            # Maak de afstandsmatrix
-                distance_matrix = pd.DataFrame(data['distances'], index=df['name'], columns=df['name'])
-                distance_matrix = distance_matrix / 1000  # Nu in kilometers
-            
-                # Rond de waarden af op 1 decimaal
-                distance_matrix = distance_matrix.round(1)
-                return distance_matrix
+                distance_matrix = pd.DataFrame(
+                    data['distances'], index=df['name'], columns=df['name']
+                )
+                distance_matrix = distance_matrix / 1000
+                return distance_matrix.round(1)
             else:
-                print("Fout: Geen 'distances' veld in de response.")
+                print("Error: 'distances' field missing in OSRM response.")
         except ValueError:
-            print("Fout: Geen geldige JSON ontvangen van de OSRM-server.")
+            print("Error: Invalid JSON received from OSRM server.")
     else:
-        print(f"Fout: De server reageerde met status code {response.status_code}")
+        print(f"Error: OSRM server responded with status code {response.status_code}")
         print(response.text)
 
+    return None
 
-#dmatrix = OSRM(df)
-#plot_heat_dist(dmatrix)
+def compute_distance_matrix(df):
+    print("Attempting to compute distance matrix using OSRM...")
+    dmatrix = OSRM(df)
+
+    if dmatrix is not None:
+        print("Successfully computed distance matrix using OSRM.")
+    else:
+        print("OSRM failed. Falling back to Haversine distance matrix...")
+        dmatrix = haversine_matrix(df)
+        print("Successfully computed distance matrix using Haversine.")
+
+    return dmatrix
+
+def plot_heat_dist(matrix):
+    plt.figure(figsize=(12, 10))
+    sns.heatmap(matrix, annot=True, cmap='YlGnBu', fmt='g', annot_kws={'size': 8})
+    plt.xticks(rotation=45, ha='right')
+    plt.yticks(rotation=45, va='top')
+    plt.title('Distance matrix of depot and customers')
+    plt.tight_layout()
+    plt.show()
+
+# # Load data and compute distance matrix
+# df = load_data('../Data/many.csv')
+# dmatrix = compute_distance_matrix(df)
+
+# if dmatrix is not None and not dmatrix.empty:
+#     plot_heat_dist(dmatrix)
+# else:
+#     print("Failed to compute a valid distance matrix.")
