@@ -145,15 +145,33 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
                 st.session_state.toggle_states[index] = True
 
         with col5:
-            # Manage checkbox state in session state
+            # Ensure the checkbox state is initialized
             if f"checkbox_{index}" not in st.session_state.checkbox_states:
                 st.session_state.checkbox_states[f"checkbox_{index}"] = False
 
-            # Use Streamlit's checkbox widget
-            st.session_state.checkbox_states[f"checkbox_{index}"] = st.checkbox(
-                f"",
-                key=f"checkbox_{index}",
-                value=st.session_state.checkbox_states[f"checkbox_{index}"]
+            # Add CSS to center the checkbox
+            st.markdown(
+                """
+                <style>
+                .center-checkbox {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    height: 100%;
+                }
+                </style>
+                """,
+                unsafe_allow_html=True
+            )
+
+            # Render the Streamlit checkbox in a styled container
+            st.markdown(
+                f"""
+                <div class="center-checkbox">
+                    <input type="checkbox" id="checkbox_{index}" {'checked' if st.session_state.checkbox_states[f"checkbox_{index}"] else ''}>
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
         st.markdown("<hr style='border: 1px solid #ccc; margin-top: -10px; margin-bottom: 10px;'>", unsafe_allow_html=True)
