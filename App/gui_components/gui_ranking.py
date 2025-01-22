@@ -56,7 +56,7 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
     rows_to_display = ranking_data.head(st.session_state.rows_to_display)
 
     #Show headers
-    col1, col2, col3, col4, col5 = st.columns([1, 2, 2, 2, 1.5])  # Adjust column widths
+    col1, col2, col3, col4, col5 = st.columns([1, 2, 2, 1.5, 1.5])  # Adjust column widths
 
     with col1:
         st.markdown("**Rank**")
@@ -70,14 +70,61 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
     with col4:
         st.markdown("**Analysis**")
 
+    # with col5:
+    #     st.markdown("**Shorter Calculations**")
     with col5:
-        st.markdown("**Shorter Calculations**")
+        st.markdown(
+            """
+            <style>
+            .tooltip {
+                position: relative;
+                display: inline-block;
+                cursor: pointer;
+                font-weight: 600; /* Match Streamlit header font weight */
+                text-align: center;
+            }
+            .tooltip .tooltiptext {
+                visibility: hidden;
+                width: 250px; /* Define the box width */
+                background-color: rgba(50, 50, 50, 0.9); /* Dark background for contrast */
+                color: #fff; /* White text for readability */
+                text-align: left; /* Align text to the left inside the box */
+                border-radius: 5px; /* Rounded corners for a modern look */
+                padding: 10px; /* Add padding for spacing */
+                position: absolute;
+                z-index: 1;
+                top: 130%; /* Position below the header */
+                left: 50%;
+                transform: translateX(-50%);
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                font-size: 12px; /* Smaller font size for clarity */
+                line-height: 1.6; /* Add spacing between lines */
+                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                white-space: normal; /* Allow text wrapping for multi-line */
+            }
+            .tooltip:hover .tooltiptext {
+                visibility: visible;
+                opacity: 1;
+            }
+            </style>
+            <div class="tooltip">
+                Shorter Calculations
+                <span class="tooltiptext">
+                    This option allows you to set a time limit for calculations. 
+                    By enabling it, the system will use faster methods to provide approximate results, 
+                    which can save time during analysis but may reduce precision.
+                </span>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
-    st.markdown("<hr style='border: 1px solid #ccc; margin-top: -10px; margin-bottom: 10px;'>", unsafe_allow_html=True)
+    st.markdown("<hr style='border: 1px solid #ccc; margin-top: 0px; margin-bottom: 10px;'>", unsafe_allow_html=True)
 
     #Loop trough rows to show data
     for index, row in rows_to_display.iterrows():
-        col1, col2, col3, col4, col5 = st.columns([1, 2, 2, 2, 1.5])  # Adjust column widths
+        col1, col2, col3, col4, col5 = st.columns([1, 2, 2, 1.5, 1.5])  # Adjust column widths
 
         with col1:
             st.write(f"{row['Rank']}")  # Display the rank
