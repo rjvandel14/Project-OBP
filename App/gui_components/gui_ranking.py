@@ -26,9 +26,9 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
 
     # Initialize session state variables
     if "rows_to_display" not in st.session_state:
-        st.session_state.rows_to_display = 5  # Start with the top 10 rows
-    if "first_show_more" not in st.session_state:
-        st.session_state.first_show_more = True  # Tracks whether it's the first click
+        st.session_state.rows_to_display = 5  # Start with the top 5 rows
+    if "click_count" not in st.session_state:
+        st.session_state.click_count = 0  # Initialiseer de klik-teller
     if "toggle_states" not in st.session_state:
         st.session_state.toggle_states = {}
     if "results" not in st.session_state:
@@ -44,7 +44,7 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
     ):
         st.session_state.current_data_hash = current_data_hash
         st.session_state.rows_to_display = 5
-        st.session_state.first_show_more = True  # Reset first click flag
+        st.session_state.click_count = 0
         st.session_state.toggle_states = {index: False for index in ranking_data.index}
         st.session_state.results = {}
 
@@ -174,11 +174,15 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
 
     # Callback to handle "Show More" button
     def show_more_callback():
-        if st.session_state.first_show_more:
-            st.session_state.rows_to_display += 5  # First click adds 5 rows
-            st.session_state.first_show_more = False  # After first click, switch to normal behavior
+        print(st.session_state.click_count)
+        st.session_state.click_count += 1  # Verhoog de klik-teller
+
+        if st.session_state.click_count == 1:
+            st.session_state.rows_to_display += 5  # Eerste klik voegt 5 rijen toe
+        elif st.session_state.click_count == 2:
+            st.session_state.rows_to_display += 40  # Tweede klik voegt 40 rijen toe
         else:
-            st.session_state.rows_to_display += 50  # Subsequent clicks add 50 rows
+            st.session_state.rows_to_display += 50  # Klikken daarna voegen 50 rijen toe
 
     # Place the "Show More" button below the table
     if len(ranking_data) > st.session_state.rows_to_display:
