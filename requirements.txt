@@ -13,3 +13,4 @@ kneed
 vrpy
 networkx
 requests
+shapely

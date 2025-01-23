@@ -1,12 +1,21 @@
 import streamlit as st
 import pandas as pd
 from ranking_functions.ranking_minmax import get_min_max_ranking
+from ranking_functions.ranking_clustering import get_cluster_kmeans
+from ranking_functions.ranking_dbscan import get_dbscan_ranking, recommend_minPts, find_optimal_epsilon
 from routing import all_cvrp
 
 def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_truck):
     """Generates and displays the ranking data."""
 
-    ranking_data = get_min_max_ranking(dmatrix, data)
+    #dmatrix_without_depot = dmatrix.drop(index='Depot', columns='Depot')
+
+    #ranking_data = get_min_max_ranking(dmatrix, data)
+    ranking_data = get_cluster_kmeans(data)
+    # min_samples = recommend_minPts(len(data) -1)
+    # eps = find_optimal_epsilon(dmatrix_without_depot, min_samples)
+    # print("eps", eps)
+    # ranking_data = get_dbscan_ranking(data,dmatrix_without_depot,eps,min_samples)
 
     # Create two columns: one for the title and the other for the filter options
     col1, col2 = st.columns([2, 1]) 
