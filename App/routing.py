@@ -11,29 +11,24 @@
 # With ranking.py:
 # Validates rankings by solving VRPs for selected partnerships.
 # Provides ground truth for heuristic ranking evaluations.
+
 import folium
 import networkx as nx
 import streamlit as st
 import pandas as pd
-import folium
 from vrpy import VehicleRoutingProblem
-from dss import depot_lat
-from dss import depot_lon
 
-    
 # Function to solve VRP for a given dataset
 def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distance_matrix, timelimit):
     # Create a directed graph
     G = nx.DiGraph()
 
     # Add "Source" and "Sink" nodes for the depot
-    depot = {'lat': depot_lat, 'lon': depot_lon}
     G.add_node("Source", demand=0)
     G.add_node("Sink", demand=0)
 
     # Add customer nodes
     for idx, row in data.iterrows():
-        customer_index = row.name + 1
         G.add_node(idx, demand=1)  # Assuming demand of 1 for each customer
 
     # Add edges with costs (distances)
@@ -73,7 +68,7 @@ def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, com
         data = pd.concat([data[~data['name'].isin(collaborating_companies)], collaboration_data])
     
     if timelimit:
-        timelimit = 10 + 0.5 * len(collaboration_data['name'])
+        timelimit = 10 + 0.25 * len(collaboration_data['name'])
 
     # Solve VRP for individual companies    
     cost_a, route_a = solve_vrp(company1_data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, dmatrix, timelimit)
@@ -158,17 +153,3 @@ def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes = Non
     st.components.v1.html(m._repr_html_(), height=600)
 
     return m
-
-def mock_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck):
-    """
-    Returns a mock cvrp.
-    """
-    mock_data = {
-    "Scenario": ["Company A", "Company B", "Collaboration"],
-    "Cost": [500.0, 600.0, 900.0],
-    "Routes": [
-        [[0, 2, 3, 0], [0, 4, 1, 0]],  # Routes for Company A
-        [[0, 5, 6, 0]],                # Routes for Company B
-        [[0, 2, 3, 5, 6, 0], [0, 4, 1, 0]]  # Routes for collaboration
-    ]}
-    return mock_data
