@@ -232,14 +232,14 @@ df = load_data('../Data/many.csv')
 
 #dmatrix = OSRM_local(df,depot_lat,depot_lon)
 #dmatrix = OSRM_full_matrix(df, batch_size=50)
-dmatrix = OSRM_full_matrix_parallel(df)
+# dmatrix = OSRM_full_matrix_parallel(df)
 
 
-# Controleer het resultaat
-if dmatrix is not None and not dmatrix.empty:
-    print("Afstandsmatrix berekend!")
-else:
-    print("Er ging iets mis bij het berekenen van de afstandsmatrix.")
+# # Controleer het resultaat
+# if dmatrix is not None and not dmatrix.empty:
+#     print("Afstandsmatrix berekend!")
+# else:
+#     print("Er ging iets mis bij het berekenen van de afstandsmatrix.")
 
 
 
@@ -251,7 +251,7 @@ print(f"Tijd voor oude functie: {end_old - start_old:.2f} seconden")
 
 # Nieuwe functie (OSRM_full_matrix_parallel)
 start_new = time.perf_counter()
-dmatrix_new = OSRM_full_matrix_parallel(df, batch_size=50, max_workers=4)  # Gebruik de nieuwe functie
+dmatrix_new = OSRM_full_matrix_parallel(df, batch_size=50, max_workers=8)  # Gebruik de nieuwe functie
 end_new = time.perf_counter()
 print(f"Tijd voor nieuwe functie: {end_new - start_new:.2f} seconden")
 
@@ -260,3 +260,6 @@ if dmatrix_old.equals(dmatrix_new):
     print("Beide matrices zijn gelijk!")
 else:
     print("De matrices verschillen, controleer de implementatie!")
+
+import os
+print(f"Aantal CPU-kernen: {os.cpu_count()}")
