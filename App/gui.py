@@ -17,6 +17,12 @@ from gui_components.gui_ranking import render_ranking
 from gui_components.gui_analysis import render_analysis
 from distancematrix import compute_distance_matrix
 
+# Cache the computation of the distance matrix
+@st.cache_data
+def get_distance_matrix(data):
+    # Compute the distance matrix here
+    return compute_distance_matrix(data)
+
 # Title
 st.title("Logistics Collaboration Dashboard")
 
@@ -26,7 +32,7 @@ vehicle_capacity, cost_per_km, fixed_cost_per_truck, data = render_sidebar()
 # Display rankings
 if data is not None:
 
-    dmatrix = compute_distance_matrix(data)
+    dmatrix = get_distance_matrix(data)
     render_ranking(dmatrix, data,vehicle_capacity, cost_per_km, fixed_cost_per_truck)
 
     # Analyze collaboration
