@@ -17,7 +17,6 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
     # print("eps", eps)
     # ranking_data = get_dbscan_ranking(data,dmatrix_without_depot,eps,min_samples)
 
-    # Display the ranked collaborations
     # Create two columns: one for the title and the other for the filter options
     col1, col2 = st.columns([2, 1]) 
     
@@ -36,13 +35,11 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
 
     # Initialize session state variables
     if "rows_to_display" not in st.session_state:
-        st.session_state.rows_to_display = 10  # Start with the top 10 rows
-    if "first_show_more" not in st.session_state:
-        st.session_state.first_show_more = True  # Tracks whether it's the first click
+        st.session_state.rows_to_display = 5  # Start with the top 5 rows
+    if "click_count" not in st.session_state:
+        st.session_state.click_count = 0  # Initialiseer de klik-teller
     if "toggle_states" not in st.session_state:
         st.session_state.toggle_states = {}
-    if "checkbox_states" not in st.session_state:
-        st.session_state.checkbox_states = {}
     if "results" not in st.session_state:
         st.session_state.results = {}
 
@@ -55,17 +52,16 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
         or st.session_state.current_data_hash != current_data_hash
     ):
         st.session_state.current_data_hash = current_data_hash
-        st.session_state.rows_to_display = 10
-        st.session_state.first_show_more = True  # Reset first click flag
+        st.session_state.rows_to_display = 5
+        st.session_state.click_count = 0
         st.session_state.toggle_states = {index: False for index in ranking_data.index}
-        st.session_state.checkbox_states = {index: False for index in ranking_data.index}
         st.session_state.results = {}
 
     # Decide how many rows to display
     rows_to_display = ranking_data.head(st.session_state.rows_to_display)
 
     #Show headers
-    col1, col2, col3, col4, col5 = st.columns([1, 2, 2, 1.5, 1.5])  # Adjust column widths
+    col1, col2, col3, col4 = st.columns([1, 2, 2, 1.5])  # Adjust column widths
 
     with col1:
         st.markdown("**Rank**")
@@ -77,11 +73,6 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
         st.markdown("**Company B**")
 
     with col4:
-        st.markdown("**Analysis**")
-
-    # with col5:
-    #     st.markdown("**Shorter Calculations**")
-    with col5:
         st.markdown(
             """
             <style>
@@ -118,7 +109,7 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
             }
             </style>
             <div class="tooltip">
-                Shorter Calculations
+                Short Analysis
                 <span class="tooltiptext">
                     This option allows you to set a time limit for calculations. 
                     By enabling it, the system will use faster methods to provide approximate results, 
@@ -133,7 +124,7 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
 
     #Loop trough rows to show data
     for index, row in rows_to_display.iterrows():
-        col1, col2, col3, col4, col5 = st.columns([1, 2, 2, 1.5, 1.5])  # Adjust column widths
+        col1, col2, col3, col4 = st.columns([1, 2, 2, 1.5])  # Adjust column widths
 
         with col1:
             st.write(f"{row['Rank']}")  # Display the rank
@@ -153,40 +144,7 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
                 # Set the clicked row's state to True
                 st.session_state.toggle_states[index] = True
 
-        with col5:
-            # Ensure the checkbox state is initialized
-            if f"checkbox_{index}" not in st.session_state.checkbox_states:
-                st.session_state.checkbox_states[f"checkbox_{index}"] = False
-
-            # Add CSS to center the checkbox
-            st.markdown(
-                """
-                <style>
-                .center-checkbox {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    height: 100%;
-                }
-                </style>
-                """,
-                unsafe_allow_html=True
-            )
-
-            # Render the Streamlit checkbox in a styled container
-            st.markdown(
-                f"""
-                <div class="center-checkbox">
-                    <input type="checkbox" id="checkbox_{index}" {'checked' if st.session_state.checkbox_states[f"checkbox_{index}"] else ''}>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-        st.markdown("<hr style='border: 1px solid #ccc; margin-top: -10px; margin-bottom: 10px;'>", unsafe_allow_html=True)
-
         # Show or hide analysis based on the toggle state
-        timelimit = st.session_state.checkbox_states.get(f"checkbox_{index}", False)
         if st.session_state.toggle_states.get(index, False):
             # Expand the analysis section
             with st.expander(f"Analysis for {row['Company A']} ↔ {row['Company B']}", expanded=True):
@@ -202,7 +160,7 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
                         row["Company B"],
                         data,
                         dmatrix,
-                        timelimit,
+                        True,
                     )
                     st.session_state.results[index] = results  # Save results in session state
 
@@ -221,13 +179,19 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
                 st.write(f"Total savings: {total_cost_a + total_cost_b - total_cost_collab}")
 
 
+        st.markdown("<hr style='border: 1px solid #ccc; margin-top: -10px; margin-bottom: 10px;'>", unsafe_allow_html=True)
+
     # Callback to handle "Show More" button
     def show_more_callback():
-        if st.session_state.first_show_more:
-            st.session_state.rows_to_display += 40  # First click adds 40 rows
-            st.session_state.first_show_more = False  # After first click, switch to normal behavior
+        print(st.session_state.click_count)
+        st.session_state.click_count += 1  # Verhoog de klik-teller
+
+        if st.session_state.click_count == 1:
+            st.session_state.rows_to_display += 5  # Eerste klik voegt 5 rijen toe
+        elif st.session_state.click_count == 2:
+            st.session_state.rows_to_display += 40  # Tweede klik voegt 40 rijen toe
         else:
-            st.session_state.rows_to_display += 50  # Subsequent clicks add 50 rows
+            st.session_state.rows_to_display += 50  # Klikken daarna voegen 50 rijen toe
 
     # Place the "Show More" button below the table
     if len(ranking_data) > st.session_state.rows_to_display:

@@ -283,20 +283,20 @@ def get_cluster_kmeans(df, max_clusters=10):
                 partnership_scores.append({
                     'Company A': company1,
                     'Company B': company2,
-                    'Shared_Clusters': shared_clusters
+                    'Score': shared_clusters
                 })
 
     # Create the DataFrame
     partnership_df = pd.DataFrame(partnership_scores)
 
     # Sort by shared clusters in descending order
-    partnership_df = partnership_df.sort_values('Shared_Clusters', ascending=False).reset_index(drop=True)
+    partnership_df = partnership_df.sort_values('Score', ascending=False).reset_index(drop=True)
 
     # Add a ranking column
     partnership_df['Rank'] = partnership_df.index + 1
 
     # Reorder columns for clarity
-    return partnership_df[['Rank', 'Company A', 'Company B', 'Shared_Clusters']] #, optimal_n_clusters
+    return partnership_df[['Rank', 'Company A', 'Company B', 'Score']] #, optimal_n_clusters
 
 # ranking = get_cluster_kmeans(df)
 # print("RANKING")
