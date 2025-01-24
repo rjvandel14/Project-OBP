@@ -17,6 +17,7 @@ import networkx as nx
 import streamlit as st
 import pandas as pd
 from vrpy import VehicleRoutingProblem
+import json
 
 # Function to solve VRP for a given dataset
 def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distance_matrix, timelimit):
@@ -87,8 +88,9 @@ def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, com
 
     return result
 
-# Plots a map with the CVRP routes
-def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes = None, output_file='map.html'):
+
+# Plots a map with the CVRP routes and generates JSON data with customer numbers
+def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes=None, output_file='map.html', json_file='routes.json'):
     # Create a Folium map centered at the depot
     m = folium.Map(location=[depot_lat, depot_lon], zoom_start=7)
 
@@ -107,26 +109,50 @@ def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes = Non
     color_map = {company_a: colors[0], company_b: colors[1]}  # Assign colors to the two companies
 
     # Add customer markers for the selected companies
-    for _, row in filtered_df.iterrows():
+    for idx, row in filtered_df.iterrows():
+        # determine customer number
+        company_name = row['name']
+        customer_number = list(filtered_df[filtered_df['name'] == company_name].index).index(idx) + 1
+
+        # marker for customers
         folium.Marker(
             location=[row['lat'], row['lon']],
-            popup=f"Customer of {row['name']}",  # Display company name in the popup
-            icon=folium.Icon(color=color_map[row['name']])
+            popup=f"{company_name} {customer_number}",  # shows company name and number in popup
+            icon=folium.Icon(color=color_map[company_name])
         ).add_to(m)
+        
+    route_data = []
 
     if routes:
         for route_id, route in routes.items():
-            route_coords = []
-            # Loop through the route and get coordinates for each customer (except 'Source' and 'Sink')
+            route_info = {"route_id": route_id, "stops": []}
+
+            # Loop through the route and get details for each customer (except 'Source' and 'Sink')
             for customer_index in route[1:-1]:
-                # Find the customer name and coordinates by index
+                # Find the customer name by index
                 customer_row = df.iloc[customer_index]
-                route_coords.append((customer_row['lat'], customer_row['lon']))
+                company_name = customer_row['name']
+
+                # Generate label as "Company N"
+                customer_number = list(filtered_df[filtered_df['name'] == company_name].index).index(customer_index) + 1
+
+                # Append to route info
+                route_info["stops"].append({
+                    "company": company_name,
+                    "customer_number": customer_number
+                })
+
+            # Add the route info to the JSON data
+            route_data.append(route_info)
 
             # Add polyline for this route
+            route_coords = [
+                (df.iloc[customer_index]['lat'], df.iloc[customer_index]['lon']) 
+                for customer_index in route[1:-1]
+            ]
             folium.PolyLine(route_coords, color="blue", weight=2.5, opacity=1).add_to(m)
 
-             # Add line from the first customer location to the depot
+            # Add line from the first customer location to the depot
             first_customer_index = route[1]
             first_customer_row = df.iloc[first_customer_index]
             folium.PolyLine(
@@ -147,9 +173,14 @@ def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes = Non
     # Save the map to an HTML file
     m.save(output_file)
 
-    # Streamlit output
+    # Export routes to a JSON file
+    with open(json_file, 'w') as f:
+        json.dump(route_data, f, indent=4)
+
+    # Display the map in Streamlit
     st.title("Partnership Map")
     st.write("Interactive map showing company customers and depot.")
     st.components.v1.html(m._repr_html_(), height=600)
 
-    return m
+
+    return route_data

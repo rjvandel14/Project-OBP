@@ -4,6 +4,8 @@ from routing import all_cvrp
 from routing import plot_routes_map
 from dss import depot_lat
 from dss import depot_lon
+import json
+
 
 def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, dmatrix):
     """Handles company selection and performs collaboration analysis."""
@@ -35,4 +37,14 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, d
             st.write(f'Collaboration: Total costs {total_cost_collab}, Fixed truck costs {results["Truck Cost"][2]}, Kilometer costs {results["Driving Cost"][2]}')
             st.write(f"Total savings: {total_cost_a + total_cost_b - total_cost_collab}")
 
-            plot_routes_map(data, depot_lat, depot_lon, company_a, company_b, results["Routes"][2], output_file='routes_map.html')
+            # Generate the map and retrieve JSON data
+            routes_json_data = plot_routes_map(data, depot_lat, depot_lon, company_a, company_b, results["Routes"][2], output_file='routes_map.html')
+
+            # Add a download button for the routes JSON
+            st.subheader("Download Routes as JSON")
+            st.download_button(
+                label="Download Routes JSON",
+                data=json.dumps(routes_json_data, indent=4),
+                file_name="routes.json",
+                mime="application/json"
+            )
