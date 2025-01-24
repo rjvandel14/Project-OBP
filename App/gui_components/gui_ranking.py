@@ -193,10 +193,24 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
         else:
             st.session_state.rows_to_display += 50  # Klikken daarna voegen 50 rijen toe
 
-    # Place the "Show More" button below the table
-    if len(ranking_data) > st.session_state.rows_to_display:
-        col1, col2, col3 = st.columns([1, 8, 1])  # Center-align the button
-        with col2:
-            st.button("Show More", key="show_more_button", on_click=show_more_callback)
+
+    col1, col2  = st.columns([2, 2]) 
+
+    with col1:
+        # Place the "Show More" button below the table
+        if len(ranking_data) > st.session_state.rows_to_display:
+            col1, col2, col3 = st.columns([1, 8, 1])  # Center-align the button
+            with col2:
+                st.button("Show More", key="show_more_button", on_click=show_more_callback)
+    
+    with col2:
+        # Voeg downloadfunctionaliteit toe
+        csv_data = ranking_data.drop(columns=["Score"]).to_csv(index=False)
+        st.download_button(
+            label="Download Ranking as CSV",
+            data=csv_data,
+            file_name='ranking_data.csv',
+            mime='text/csv',
+        )
 
     return ranking_data
