@@ -64,84 +64,6 @@ def OSRM(data_input):
 
     return None
 
-def OSRM_local(data_input, depot_lat, depot_lon):
-    # Voeg de depot-coördinaten toe aan de dataset
-    depot_row = pd.DataFrame({'name': ['Depot'], 'lat': [depot_lat], 'lon': [depot_lon]})
-    df = pd.concat([depot_row, data_input], ignore_index=True)
-
-    # Maak een lijst van coördinaten
-    coordinates = ';'.join(df.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
-
-    # Verbind met de lokale OSRM-server
-    osrm_url = 'http://localhost:5000/table/v1/driving/'
-    response = requests.get(f"{osrm_url}{coordinates}?annotations=distance")
-
-    # Controleer of de server correct reageert
-    if response.status_code == 200:
-        try:
-            data = response.json()
-            if 'distances' in data:
-                # Maak een afstandsmatrix
-                distance_matrix = pd.DataFrame(
-                    data['distances'], index=df['name'], columns=df['name']
-                )
-                # Converteer naar kilometers en rond af
-                distance_matrix = distance_matrix / 1000
-                return distance_matrix.round(1)
-            else:
-                print("Error: 'distances' field missing in OSRM response.")
-        except ValueError:
-            print("Error: Invalid JSON received from OSRM server.")
-    else:
-        print(f"Error: OSRM server responded with status code {response.status_code}")
-        print(response.text)
-
-    return None
-
-def OSRM_full_matrix(data_input, batch_size=50):
-    # Zorg dat de indexen kloppen
-    data_input = data_input.reset_index(drop=True)
-
-    # Maak een lege matrix
-    n = len(data_input)
-    full_matrix = np.zeros((n, n))
-
-    # Splits locaties in batches
-    batches = [data_input.iloc[i:i + batch_size] for i in range(0, n, batch_size)]
-
-    # Itereer over alle batchparen (bronbatch x doelbatch)
-    for i, batch in enumerate(batches):
-        batch_coords = ';'.join(batch.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
-        
-        for j, ref_batch in enumerate(batches):
-            ref_coords = ';'.join(ref_batch.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
-            
-            # Vraag afstanden op tussen de batches
-            osrm_url = f'http://localhost:5000/table/v1/driving/{batch_coords};{ref_coords}?annotations=distance'
-            response = requests.get(osrm_url)
-            
-            if response.status_code == 200:
-                try:
-                    data = response.json()
-                    if 'distances' in data:
-                        # Vul het corresponderende deel van de matrix in
-                        for k, row_index in enumerate(batch.index):
-                            for l, col_index in enumerate(ref_batch.index):
-                                full_matrix[row_index, col_index] = data['distances'][k][l]
-                    else:
-                        print("Error: 'distances' field missing in OSRM response.")
-                except ValueError:
-                    print("Error: Invalid JSON received from OSRM server.")
-            else:
-                print(f"Error: OSRM server responded with status code {response.status_code}")
-                print(response.text)
-                return None
-
-    # Converteer naar kilometers en afronden
-    full_matrix = np.array(full_matrix) / 1000
-    return pd.DataFrame(full_matrix, index=data_input['name'], columns=data_input['name'])
-
-
 def compute_distance_matrix(df):
     print("Attempting to compute distance matrix using OSRM...")
     dmatrix = OSRM(df)
@@ -183,6 +105,8 @@ def fetch_osrm_distances(batch, ref_batch):
 
 def OSRM_full_matrix_parallel(data_input, batch_size=50, max_workers=4):
     """Calculate a full NxN distance matrix using parallel requests."""
+    depot_row = pd.DataFrame({'name': ['Depot'], 'lat': [depot_lat], 'lon': [depot_lon]})
+    data_input = pd.concat([depot_row, data_input], ignore_index=True)
     # Ensure indices are reset for consistency
     data_input = data_input.reset_index(drop=True)
 
@@ -219,47 +143,16 @@ def OSRM_full_matrix_parallel(data_input, batch_size=50, max_workers=4):
     return pd.DataFrame(full_matrix, index=data_input['name'], columns=data_input['name'])
 
 
-# # Load data and compute distance matrix
-# df = load_data('../Data/many.csv')
-# dmatrix = compute_distance_matrix(df)
+# Load data and compute distance matrix
+df = load_data('../Data/mini.csv')
+#dmatrix = compute_distance_matrix(df)
+dmatrix = OSRM_full_matrix_parallel(df)
 
-# if dmatrix is not None and not dmatrix.empty:
-#     plot_heat_dist(dmatrix)
-# else:
-#     print("Failed to compute a valid distance matrix.")
-
-df = load_data('../Data/many.csv')
-
-#dmatrix = OSRM_local(df,depot_lat,depot_lon)
-#dmatrix = OSRM_full_matrix(df, batch_size=50)
-# dmatrix = OSRM_full_matrix_parallel(df)
-
-
-# # Controleer het resultaat
-# if dmatrix is not None and not dmatrix.empty:
-#     print("Afstandsmatrix berekend!")
-# else:
-#     print("Er ging iets mis bij het berekenen van de afstandsmatrix.")
-
-
-
-# Oude functie (OSRM_full_matrix)
-start_old = time.perf_counter()
-dmatrix_old = OSRM_full_matrix(df, batch_size=50)  # Gebruik de oude functie
-end_old = time.perf_counter()
-print(f"Tijd voor oude functie: {end_old - start_old:.2f} seconden")
-
-# Nieuwe functie (OSRM_full_matrix_parallel)
-start_new = time.perf_counter()
-dmatrix_new = OSRM_full_matrix_parallel(df, batch_size=50, max_workers=8)  # Gebruik de nieuwe functie
-end_new = time.perf_counter()
-print(f"Tijd voor nieuwe functie: {end_new - start_new:.2f} seconden")
-
-# Controleer of de resultaten vergelijkbaar zijn
-if dmatrix_old.equals(dmatrix_new):
-    print("Beide matrices zijn gelijk!")
+if dmatrix is not None and not dmatrix.empty:
+    plot_heat_dist(dmatrix)
 else:
-    print("De matrices verschillen, controleer de implementatie!")
+    print("Failed to compute a valid distance matrix.")
 
-import os
-print(f"Aantal CPU-kernen: {os.cpu_count()}")
+#df = load_data('../Data/many.csv')
+
+
