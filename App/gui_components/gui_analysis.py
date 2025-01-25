@@ -14,8 +14,8 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, d
     placeholder_companies = ["Select a company", *unique_companies]
 
     st.subheader("Select Companies for Detailed Analysis")
-    company_a = st.selectbox("Select Company A", placeholder_companies, index=0)
-    company_b = st.selectbox("Select Company B", placeholder_companies, index=0)
+    company_a = st.selectbox("Select Company A", placeholder_companies, index=0, key="company_a")
+    company_b = st.selectbox("Select Company B", placeholder_companies, index=0, key="company_b")
 
     # Analyze collaboration
     if st.button("Analyze Collaboration"):
@@ -38,13 +38,23 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, d
             st.write(f"Total savings: {total_cost_a + total_cost_b - total_cost_collab}")
 
             # Generate the map and retrieve JSON data
-            routes_json_data = plot_routes_map(data, depot_lat, depot_lon, company_a, company_b, results["Routes"][2], output_file='routes_map.html')
+            map, routes_json_data = plot_routes_map(data, depot_lat, depot_lon, company_a, company_b, results["Routes"][2], output_file='routes_map.html')
 
-            # Add a download button for the routes JSON
-            st.subheader("Download Routes as JSON")
-            st.download_button(
-                label="Download Routes JSON",
-                data=json.dumps(routes_json_data, indent=4),
-                file_name="routes.json",
-                mime="application/json"
-            )
+            # Store map and JSON data in session state
+            st.session_state["map_html"] = map._repr_html_()
+            st.session_state["routes_json"] = json.dumps(routes_json_data, indent=4)
+
+    # Display map and download button if available in session state
+    if "map_html" in st.session_state:
+        st.title("Partnership Map")
+        st.write("Interactive map showing company customers and depot.")
+        st.components.v1.html(st.session_state["map_html"], height=450)
+
+    if "routes_json" in st.session_state:
+        st.subheader("Download Routes as JSON")
+        st.download_button(
+            label="Download Routes",
+            data=st.session_state["routes_json"],
+            file_name="routes.json",
+            mime="application/json"
+        )

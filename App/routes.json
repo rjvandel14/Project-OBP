@@ -4,42 +4,42 @@
         "stops": [
             {
                 "company": "NextGen Technologies",
-                "customer_number": 3
-            },
-            {
-                "company": "NextGen Technologies",
                 "customer_number": 5
             },
             {
                 "company": "NextGen Technologies",
-                "customer_number": 2
-            },
-            {
-                "company": "Pioneer Networks",
-                "customer_number": 4
-            },
-            {
-                "company": "Pioneer Networks",
                 "customer_number": 3
             },
             {
-                "company": "Pioneer Networks",
-                "customer_number": 2
-            },
-            {
-                "company": "NextGen Technologies",
+                "company": "Swift Industries",
                 "customer_number": 4
             },
             {
-                "company": "NextGen Technologies",
+                "company": "Swift Industries",
                 "customer_number": 1
             },
             {
-                "company": "Pioneer Networks",
+                "company": "Swift Industries",
+                "customer_number": 3
+            },
+            {
+                "company": "Swift Industries",
                 "customer_number": 5
             },
             {
-                "company": "Pioneer Networks",
+                "company": "Swift Industries",
+                "customer_number": 2
+            },
+            {
+                "company": "NextGen Technologies",
+                "customer_number": 2
+            },
+            {
+                "company": "NextGen Technologies",
+                "customer_number": 4
+            },
+            {
+                "company": "NextGen Technologies",
                 "customer_number": 1
             }
         ]

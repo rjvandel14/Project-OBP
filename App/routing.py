@@ -177,10 +177,4 @@ def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes=None,
     with open(json_file, 'w') as f:
         json.dump(route_data, f, indent=4)
 
-    # Display the map in Streamlit
-    st.title("Partnership Map")
-    st.write("Interactive map showing company customers and depot.")
-    st.components.v1.html(m._repr_html_(), height=600)
-
-
-    return route_data
+    return m, route_data
