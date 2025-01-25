@@ -4,7 +4,7 @@ from routing import all_cvrp
 from routing import plot_routes_map
 from dss import depot_lat
 from dss import depot_lon
-import json
+import csv
 
 
 def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, dmatrix):
@@ -37,12 +37,12 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, d
             st.write(f'Collaboration: Total costs {total_cost_collab}, Fixed truck costs {results["Truck Cost"][2]}, Kilometer costs {results["Driving Cost"][2]}')
             st.write(f"Total savings: {total_cost_a + total_cost_b - total_cost_collab}")
 
-            # Generate the map and retrieve JSON data
-            map, routes_json_data = plot_routes_map(data, depot_lat, depot_lon, company_a, company_b, results["Routes"][2], output_file='routes_map.html')
+            # Generate the map and CSV file
+            map, csv_file_path = plot_routes_map(data, depot_lat, depot_lon, company_a, company_b, results["Routes"][2], output_file='routes_map.html')
 
-            # Store map and JSON data in session state
+            # Store map and CSV path in session state
             st.session_state["map_html"] = map._repr_html_()
-            st.session_state["routes_json"] = json.dumps(routes_json_data, indent=4)
+            st.session_state["csv_file_path"] = csv_file_path
 
     # Display map and download button if available in session state
     if "map_html" in st.session_state:
@@ -50,11 +50,13 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, d
         st.write("Interactive map showing company customers and depot.")
         st.components.v1.html(st.session_state["map_html"], height=450)
 
-    if "routes_json" in st.session_state:
-        st.subheader("Download Routes as JSON")
+    if "csv_file_path" in st.session_state:
+        st.subheader("Download Routes as CSV")
+        with open(st.session_state["csv_file_path"], 'r') as csv_file:
+            csv_data = csv_file.read()
         st.download_button(
             label="Download Routes",
-            data=st.session_state["routes_json"],
-            file_name="routes.json",
-            mime="application/json"
+            data=csv_data,
+            file_name="routes.csv",
+            mime="text/csv"
         )

@@ -17,7 +17,7 @@ import networkx as nx
 import streamlit as st
 import pandas as pd
 from vrpy import VehicleRoutingProblem
-import json
+import csv
 
 # Function to solve VRP for a given dataset
 def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distance_matrix, timelimit):
@@ -88,9 +88,8 @@ def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, com
 
     return result
 
-
 # Plots a map with the CVRP routes and generates JSON data with customer numbers
-def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes=None, output_file='map.html', json_file='routes.json'):
+def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes=None, output_file='map.html', csv_file='routes.csv'):
     # Create a Folium map centered at the depot
     m = folium.Map(location=[depot_lat, depot_lon], zoom_start=7)
 
@@ -110,42 +109,38 @@ def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes=None,
 
     # Add customer markers for the selected companies
     for idx, row in filtered_df.iterrows():
-        # determine customer number
+        # Determine customer number
         company_name = row['name']
         customer_number = list(filtered_df[filtered_df['name'] == company_name].index).index(idx) + 1
 
-        # marker for customers
+        # Add marker for customers
         folium.Marker(
             location=[row['lat'], row['lon']],
-            popup=f"{company_name} {customer_number}",  # shows company name and number in popup
+            popup=f"{company_name} {customer_number}",  # Shows company name and number in popup
             icon=folium.Icon(color=color_map[company_name])
         ).add_to(m)
-        
-    route_data = []
+
+    # Prepare CSV data
+    csv_data = []
 
     if routes:
         for route_id, route in routes.items():
-            route_info = {"route_id": route_id, "stops": []}
-
             # Loop through the route and get details for each customer (except 'Source' and 'Sink')
             for customer_index in route[1:-1]:
-                # Find the customer name by index
                 customer_row = df.iloc[customer_index]
                 company_name = customer_row['name']
 
                 # Generate label as "Company N"
                 customer_number = list(filtered_df[filtered_df['name'] == company_name].index).index(customer_index) + 1
 
-                # Append to route info
-                route_info["stops"].append({
+                # Append the data to the CSV output
+                csv_data.append({
+                    "route_id": route_id,
                     "company": company_name,
-                    "customer_number": customer_number
+                    "customer_number": customer_number,
                 })
 
-            # Add the route info to the JSON data
-            route_data.append(route_info)
-
-            # Add polyline for this route
+            # Add lines to the map for visualization
             route_coords = [
                 (df.iloc[customer_index]['lat'], df.iloc[customer_index]['lon']) 
                 for customer_index in route[1:-1]
@@ -173,8 +168,10 @@ def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes=None,
     # Save the map to an HTML file
     m.save(output_file)
 
-    # Export routes to a JSON file
-    with open(json_file, 'w') as f:
-        json.dump(route_data, f, indent=4)
+    # Export routes to a CSV file
+    with open(csv_file, mode='w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=["route_id", "company", "customer_number"])
+        writer.writeheader()
+        writer.writerows(csv_data)
 
-    return m, route_data
+    return m, csv_file
