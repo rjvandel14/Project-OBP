@@ -46,20 +46,20 @@ def get_min_max_ranking(dmatrix, df):
                 partnership_scores.append({
                     'Company A': company1,
                     'Company B': company2,
-                    'Min_Max_Score': min_max_score
+                    'Score': min_max_score
                 })
 
     # Create the DataFrame
     partnership_df = pd.DataFrame(partnership_scores)
 
     # Sort by score
-    partnership_df = partnership_df.sort_values('Min_Max_Score', ascending=True).reset_index(drop=True)
+    partnership_df = partnership_df.sort_values('Score', ascending=False).reset_index(drop=True)
 
     # Ensure all rows are included and ranked, even with duplicate scores
     partnership_df['Rank'] = partnership_df.index + 1
 
     # Reorder columns for clarity
-    return partnership_df[['Rank', 'Company A', 'Company B', 'Min_Max_Score']]
+    return partnership_df[['Rank', 'Company A', 'Company B', 'Score']]
 
 
 # df = load_data('../Data/mini.csv')

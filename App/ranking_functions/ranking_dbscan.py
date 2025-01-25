@@ -42,20 +42,20 @@ def get_dbscan_ranking(df, dmatrix, eps, min_samples):
                 partnership_scores.append({
                     'Company A': company1,
                     'Company B': company2,
-                    'Shared_Clusters': shared_clusters
+                    'Score': shared_clusters
                 })
 
     # Create the DataFrame
     partnership_df = pd.DataFrame(partnership_scores)
 
     # Sort by shared clusters in descending order
-    partnership_df = partnership_df.sort_values('Shared_Clusters', ascending=False).reset_index(drop=True)
+    partnership_df = partnership_df.sort_values('Score', ascending=False).reset_index(drop=True)
 
     # Add a ranking column
     partnership_df['Rank'] = partnership_df.index + 1
 
     # Reorder columns for clarity
-    return partnership_df[['Rank', 'Company A', 'Company B', 'Shared_Clusters']]
+    return partnership_df[['Rank', 'Company A', 'Company B', 'Score']]
 
 def recommend_minPts(dataset_size, dimensions=2):
     """
