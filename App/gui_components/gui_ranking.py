@@ -184,14 +184,14 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
     # Callback to handle "Show More" button
     def show_more_callback():
         print(st.session_state.click_count)
-        st.session_state.click_count += 1  # Verhoog de klik-teller
+        st.session_state.click_count += 1  # add to click count
 
         if st.session_state.click_count == 1:
-            st.session_state.rows_to_display += 5  # Eerste klik voegt 5 rijen toe
+            st.session_state.rows_to_display += 5  # add 5 rows after first click
         elif st.session_state.click_count == 2:
-            st.session_state.rows_to_display += 40  # Tweede klik voegt 40 rijen toe
+            st.session_state.rows_to_display += 40  # add 40 rows adter second click
         else:
-            st.session_state.rows_to_display += 50  # Klikken daarna voegen 50 rijen toe
+            st.session_state.rows_to_display += 50  # add 50 rows after
 
     # Place the "Show More" and download csv button below the table
     if len(ranking_data) > st.session_state.rows_to_display:
@@ -201,7 +201,7 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
         with col3:
             csv_data = ranking_data.drop(columns=["Score"]).to_csv(index=False)
             st.download_button(
-                label="Download Complete Ranking as CSV",
+                label="Download Complete Ranking",
                 data=csv_data,
                 file_name='ranking_data.csv',
                 mime='text/csv',

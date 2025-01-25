@@ -13,7 +13,7 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, d
     unique_companies = sorted(data["name"].unique())
     placeholder_companies = ["Select a company", *unique_companies]
 
-    st.subheader("Select Companies for Detailed Analysis")
+    st.subheader("Detailed Analysis")
     company_a = st.selectbox("Select Company A", placeholder_companies, index=0, key="company_a")
     company_b = st.selectbox("Select Company B", placeholder_companies, index=0, key="company_b")
 
@@ -51,7 +51,6 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, d
         st.components.v1.html(st.session_state["map_html"], height=450)
 
     if "csv_file_path" in st.session_state:
-        st.subheader("Download Routes as CSV")
         with open(st.session_state["csv_file_path"], 'r') as csv_file:
             csv_data = csv_file.read()
         st.download_button(

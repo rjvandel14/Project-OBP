@@ -13,8 +13,8 @@ def render_sidebar():
     """Renders the sidebar and returns user inputs and loaded data."""
     # Sidebar inputs
     vehicle_capacity = st.sidebar.number_input("Vehicle Capacity", min_value=1, value=10)
-    cost_per_km = st.sidebar.number_input("Cost per KM (€)", min_value=0.0, value=2.5, format="%.2f")
-    fixed_cost_per_truck = st.sidebar.number_input("Fixed Cost per Truck (€)", min_value=0.0, value=50.0, format="%.2f")
+    cost_per_km = st.sidebar.number_input("Costs per KM (€)", min_value=0.0, value=2.5, format="%.2f")
+    fixed_cost_per_truck = st.sidebar.number_input("Fixed Costs per Truck (€)", min_value=0.0, value=50.0, format="%.2f")
 
     # File uploader
     uploaded_file = st.sidebar.file_uploader("Upload your CSV file", type=["csv"])
