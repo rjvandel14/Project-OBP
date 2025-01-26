@@ -309,11 +309,6 @@ def get_cluster_kmeans(df, vehicle_capacity):
     # Reorder columns for clarity
     return partnership_df[['Rank', 'Company A', 'Company B', 'Score']] #, optimal_n_clusters
 
-data = load_data('../Data/many.csv')
-vehicle_capacity = 10
-
-get_cluster_kmeans(data, vehicle_capacity)
-
 # ranking = get_cluster_kmeans(df)
 # print("RANKING")
 # print(ranking)
