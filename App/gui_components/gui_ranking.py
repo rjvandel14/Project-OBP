@@ -11,7 +11,7 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
     #dmatrix_without_depot = dmatrix.drop(index='Depot', columns='Depot')
 
     #ranking_data = get_min_max_ranking(dmatrix, data)
-    ranking_data = get_cluster_kmeans(data)
+    ranking_data = get_cluster_kmeans(data, vehicle_capacity)
     # min_samples = recommend_minPts(len(data) -1)
     # eps = find_optimal_epsilon(dmatrix_without_depot, min_samples)
     # print("eps", eps)
