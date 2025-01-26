@@ -6,6 +6,7 @@ from sklearn.metrics import silhouette_score
 import folium
 import sys
 import os
+import math
 
 # Load your custom functions
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -223,7 +224,7 @@ def calculate_partnership_rankings(df, cluster_column):
 # comparison_df = df[["lat", "lon", "KMeans Cluster", "DBSCAN Cluster"]]
 # st.map(comparison_df)
 
-def calculate_optimal_clusters(data, max_clusters=10):
+def calculate_optimal_clusters(data, vehicle_capacity):
     """
     Calculate the optimal number of clusters using the silhouette score.
 
@@ -234,8 +235,18 @@ def calculate_optimal_clusters(data, max_clusters=10):
     Returns:
     - int: Optimal number of clusters based on the highest silhouette score.
     """
+    k_min = int(len(data)/vehicle_capacity)
+    if len(data) < 100:
+        k_max = int(len(data)/2)
+    elif len(data) < 500:
+        k_max = max(k_min + 15, int(math.sqrt(len(data)) * 2))
+    elif len(data) < 1000:
+        k_max = k_min + 30
+    else: 
+        k_max = k_min + 50
+
     scores = []
-    cluster_range = range(2, max_clusters + 1)
+    cluster_range = range(k_min, k_max)
     for n_clusters in cluster_range:
         kmeans = KMeans(n_clusters=n_clusters, random_state=42)
         cluster_labels = kmeans.fit_predict(data)
@@ -246,7 +257,7 @@ def calculate_optimal_clusters(data, max_clusters=10):
     optimal_n_clusters = max(scores, key=lambda x: x[1])[0]
     return optimal_n_clusters
 
-def get_cluster_kmeans(df, max_clusters=10):
+def get_cluster_kmeans(df, vehicle_capacity):
     """
     Computes a ranking table for collaborations using K-Means clustering
     with an optimal number of clusters determined by silhouette score.
@@ -259,7 +270,7 @@ def get_cluster_kmeans(df, max_clusters=10):
     - pd.DataFrame: A ranking table with columns ['Rank', 'Company A', 'Company B', 'Shared_Clusters'].
     """
     # Calculate the optimal number of clusters
-    optimal_n_clusters = calculate_optimal_clusters(df[["lat", "lon"]], max_clusters)
+    optimal_n_clusters = calculate_optimal_clusters(df[["lat", "lon"]], vehicle_capacity)
 
     # Apply K-Means clustering
     kmeans = KMeans(n_clusters=optimal_n_clusters, random_state=42)
