@@ -25,13 +25,11 @@ def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distanc
     G = nx.DiGraph()
 
     # Add "Source" and "Sink" nodes for the depot
-    depot = {'lat': depot_lat, 'lon': depot_lon}
     G.add_node("Source", demand=0)
     G.add_node("Sink", demand=0)
 
     # Add customer nodes
     for idx, row in data.iterrows():
-        customer_index = row.name + 1
         G.add_node(idx, demand=1)  # Assuming demand of 1 for each customer
 
     # Add edges with costs (distances)
