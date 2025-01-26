@@ -238,9 +238,9 @@ def calculate_optimal_clusters(data, vehicle_capacity):
     k_min = int(len(data)/vehicle_capacity)
     if len(data) < 100:
         k_max = int(len(data)/2)
-    elif len(data) >= 100 and len(data) < 500:
-        k_max = int(math.sqrt(len(data))/2)
-    elif len(data) >= 500 and len(data) < 1000:
+    elif len(data) < 500:
+        k_max = max(k_min + 15, int(math.sqrt(len(data)) * 2))
+    elif len(data) < 1000:
         k_max = k_min + 30
     else: 
         k_max = k_min + 50
@@ -308,6 +308,11 @@ def get_cluster_kmeans(df, vehicle_capacity):
 
     # Reorder columns for clarity
     return partnership_df[['Rank', 'Company A', 'Company B', 'Score']] #, optimal_n_clusters
+
+data = load_data('../Data/many.csv')
+vehicle_capacity = 10
+
+get_cluster_kmeans(data, vehicle_capacity)
 
 # ranking = get_cluster_kmeans(df)
 # print("RANKING")
