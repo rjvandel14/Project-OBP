@@ -17,10 +17,8 @@ import streamlit as st
 import pandas as pd
 import folium
 from vrpy import VehicleRoutingProblem
-from dss import depot_lat
-from dss import depot_lon
+import csv
 
-    
 # Function to solve VRP for a given dataset
 def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distance_matrix, timelimit):
     # Create a directed graph
@@ -92,8 +90,8 @@ def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, com
 
     return result
 
-# Plots a map with the CVRP routes
-def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes = None, output_file='map.html'):
+# Plots a map with the CVRP routes and generates JSON data with customer numbers
+def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes=None, output_file='map.html', csv_file='routes.csv'):
     # Create a Folium map centered at the depot
     m = folium.Map(location=[depot_lat, depot_lon], zoom_start=7)
 
@@ -112,26 +110,46 @@ def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes = Non
     color_map = {company_a: colors[0], company_b: colors[1]}  # Assign colors to the two companies
 
     # Add customer markers for the selected companies
-    for _, row in filtered_df.iterrows():
+    for idx, row in filtered_df.iterrows():
+        # Determine customer number
+        company_name = row['name']
+        customer_number = list(filtered_df[filtered_df['name'] == company_name].index).index(idx) + 1
+
+        # Add marker for customers
         folium.Marker(
             location=[row['lat'], row['lon']],
-            popup=f"Customer of {row['name']}",  # Display company name in the popup
-            icon=folium.Icon(color=color_map[row['name']])
+            popup=f"{company_name} {customer_number}",  # Shows company name and number in popup
+            icon=folium.Icon(color=color_map[company_name])
         ).add_to(m)
+
+    # Prepare CSV data
+    csv_data = []
 
     if routes:
         for route_id, route in routes.items():
-            route_coords = []
-            # Loop through the route and get coordinates for each customer (except 'Source' and 'Sink')
+            # Loop through the route and get details for each customer (except 'Source' and 'Sink')
             for customer_index in route[1:-1]:
-                # Find the customer name and coordinates by index
                 customer_row = df.iloc[customer_index]
-                route_coords.append((customer_row['lat'], customer_row['lon']))
+                company_name = customer_row['name']
 
-            # Add polyline for this route
+                # Generate label as "Company N"
+                customer_number = list(filtered_df[filtered_df['name'] == company_name].index).index(customer_index) + 1
+
+                # Append the data to the CSV output
+                csv_data.append({
+                    "route_id": route_id,
+                    "company": company_name,
+                    "customer_number": customer_number,
+                })
+
+            # Add lines to the map for visualization
+            route_coords = [
+                (df.iloc[customer_index]['lat'], df.iloc[customer_index]['lon']) 
+                for customer_index in route[1:-1]
+            ]
             folium.PolyLine(route_coords, color="blue", weight=2.5, opacity=1).add_to(m)
 
-             # Add line from the first customer location to the depot
+            # Add line from the first customer location to the depot
             first_customer_index = route[1]
             first_customer_row = df.iloc[first_customer_index]
             folium.PolyLine(
@@ -152,23 +170,10 @@ def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes = Non
     # Save the map to an HTML file
     m.save(output_file)
 
-    # Streamlit output
-    st.title("Partnership Map")
-    st.write("Interactive map showing company customers and depot.")
-    st.components.v1.html(m._repr_html_(), height=600)
+    # Export routes to a CSV file
+    with open(csv_file, mode='w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=["route_id", "company", "customer_number"])
+        writer.writeheader()
+        writer.writerows(csv_data)
 
-    return m
-
-def mock_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck):
-    """
-    Returns a mock cvrp.
-    """
-    mock_data = {
-    "Scenario": ["Company A", "Company B", "Collaboration"],
-    "Cost": [500.0, 600.0, 900.0],
-    "Routes": [
-        [[0, 2, 3, 0], [0, 4, 1, 0]],  # Routes for Company A
-        [[0, 5, 6, 0]],                # Routes for Company B
-        [[0, 2, 3, 5, 6, 0], [0, 4, 1, 0]]  # Routes for collaboration
-    ]}
-    return mock_data
+    return m, csv_file

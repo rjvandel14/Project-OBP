@@ -133,10 +133,12 @@ def get_validation(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, dm
 
 df = load_data('../Data/mini.csv')
 dmatrix = compute_distance_matrix(df)
+rankingdbscan = get_dbscan_ranking(df, dmatrix.drop(index='Depot', columns='Depot'), 30, 6) 
+rankingclusterkmeans = get_cluster_kmeans(df, max_clusters=10)
 rankingdbscan = get_dbscan_ranking(df, dmatrix.drop(index='Depot', columns='Depot'), 38, 2) 
 rankingclusterkmeans = get_cluster_kmeans(df, 10) # second argument in get_cluster_kmeans is for vehicle capacity
 rankingminmax = get_min_max_ranking(dmatrix, df)
-get_validation(10, 2.5, 50, df, dmatrix, rankingminmax)
+get_validation(10, 2.5, 50, df, dmatrix, rankingdbscan)
 
 # # Show all rows and columns
 # pd.set_option('display.max_rows', None)  # None means no limit on rows
