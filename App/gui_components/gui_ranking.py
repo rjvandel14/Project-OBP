@@ -183,7 +183,6 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
 
     # Callback to handle "Show More" button
     def show_more_callback():
-        print(st.session_state.click_count)
         st.session_state.click_count += 1  # add to click count
 
         if st.session_state.click_count == 1:
