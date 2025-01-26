@@ -144,11 +144,12 @@ def OSRM_full_matrix_parallel(data_input, batch_size=50, max_workers=4):
 
 
 # Load data and compute distance matrix
-df = load_data('../Data/mini.csv')
+df = load_data('../Data/many.csv')
 #dmatrix = compute_distance_matrix(df)
 dmatrix = OSRM_full_matrix_parallel(df)
 
 if dmatrix is not None and not dmatrix.empty:
+    print(dmatrix)
     plot_heat_dist(dmatrix)
 else:
     print("Failed to compute a valid distance matrix.")

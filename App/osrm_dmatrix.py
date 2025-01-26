@@ -81,14 +81,10 @@ def OSRM_full_matrix_parallel(data_input, batch_size=50, max_workers=4, osrm_url
 def is_osrm_url_reachable(osrm_url, is_local=True):
     """Check if the OSRM URL is reachable."""
     try:
-        # Local OSRM uses the /health endpoint
-        if is_local:
-            health_url = f"{osrm_url}/health"
-        else:
-            # Public OSRM: Use a lightweight /table test request
-            health_url = f"{osrm_url}/table/v1/driving/-73.985664,40.748514;-73.985664,40.748514?annotations=distance"
+        # Use a lightweight /table request to check both local and public OSRM
+        test_url = f"{osrm_url}/table/v1/driving/13.388860,52.517037;13.397634,52.529407?annotations=distance"
         
-        response = requests.get(health_url, timeout=5)
+        response = requests.get(test_url, timeout=10)
         return response.status_code == 200
     except Exception:
         return False
@@ -106,9 +102,13 @@ def compute_distance_matrix(df):
         if is_osrm_url_reachable(osrm_url, is_local=is_local):
             print(f"Attempting OSRM at {osrm_url}...")
             try:
+                start_time = time.time()  # Start the timer
                 dmatrix = OSRM_full_matrix_parallel(df, batch_size=50, max_workers=4, osrm_url=osrm_url)
+                end_time = time.time()  # Stop the timer
                 if not dmatrix.empty:
+                    elapsed_time = end_time - start_time  # Calculate elapsed time
                     print(f"Successfully computed distance matrix using OSRM at {osrm_url}.")
+                    print(f"Time taken: {elapsed_time:.2f} seconds.")
                     return dmatrix
             except Exception as e:
                 print(f"Failed to compute distance matrix using OSRM at {osrm_url}: {e}")
@@ -133,7 +133,7 @@ def plot_heat_dist(matrix):
 # ----------------- Main Execution -----------------
 
 if __name__ == "__main__":
-    df = load_data('../Data/mini.csv')  # Load your dataset
+    df = load_data('../Data/medium.csv')  # Load your dataset
     dmatrix = compute_distance_matrix(df)
 
     if dmatrix is not None and not dmatrix.empty:
