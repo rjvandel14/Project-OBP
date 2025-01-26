@@ -1,0 +1,47 @@
+[
+    {
+        "route_id": 1,
+        "stops": [
+            {
+                "company": "NextGen Technologies",
+                "customer_number": 5
+            },
+            {
+                "company": "NextGen Technologies",
+                "customer_number": 3
+            },
+            {
+                "company": "Swift Industries",
+                "customer_number": 4
+            },
+            {
+                "company": "Swift Industries",
+                "customer_number": 1
+            },
+            {
+                "company": "Swift Industries",
+                "customer_number": 3
+            },
+            {
+                "company": "Swift Industries",
+                "customer_number": 5
+            },
+            {
+                "company": "Swift Industries",
+                "customer_number": 2
+            },
+            {
+                "company": "NextGen Technologies",
+                "customer_number": 2
+            },
+            {
+                "company": "NextGen Technologies",
+                "customer_number": 4
+            },
+            {
+                "company": "NextGen Technologies",
+                "customer_number": 1
+            }
+        ]
+    }
+]
