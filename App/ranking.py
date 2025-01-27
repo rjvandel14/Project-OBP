@@ -85,7 +85,7 @@ def create_partnership_map(df, depot_lat, depot_lon, output_file='map.html'):
 # depot_lon = 5.17215
 # # create_partnership_map(df, depot_lat, depot_lon, output_file='partnership_map.html')
 
-#df = load_data('C:/Users/malou/OneDrive/Documenten/VU/Business Analytics/YEAR 1 - 2024-2025 (Mc)/Project Optimization of Business Processes/Project-OBP/Data/many.csv')
+# df = load_data('C:/Users/malou/OneDrive/Documenten/VU/Business Analytics/YEAR 1 - 2024-2025 (Mc)/Project Optimization of Business Processes/Project-OBP/Data/many.csv')
 
 def get_validation(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, dmatrix, ranking):
     selected_pairs = pd.concat([ranking.head(3), ranking.tail(3)])
