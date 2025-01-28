@@ -70,7 +70,7 @@ def recommend_minPts(dataset_size, dimensions=2):
     """
     if dataset_size < 100:
         return max(4, dimensions + 1)  # Small datasets: Use the rule of thumb
-    elif 100 <= dataset_size <= 1000:
+    elif dataset_size < 1000:
         return max(5, dimensions + 1)  # Medium datasets: Slightly larger minPts
     else:
         return max(10, dimensions + 1)  # Large datasets: Higher minPts for noise filtering

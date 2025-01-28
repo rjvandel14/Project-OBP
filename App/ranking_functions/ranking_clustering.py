@@ -224,7 +224,7 @@ def calculate_partnership_rankings(df, cluster_column):
 # comparison_df = df[["lat", "lon", "KMeans Cluster", "DBSCAN Cluster"]]
 # st.map(comparison_df)
 
-def calculate_optimal_clusters(data, vehicle_capacity):
+def calculate_optimal_clusters(data):
     """
     Calculate the optimal number of clusters using the silhouette score.
 
@@ -235,15 +235,17 @@ def calculate_optimal_clusters(data, vehicle_capacity):
     Returns:
     - int: Optimal number of clusters based on the highest silhouette score.
     """
-    k_min = int(len(data)/vehicle_capacity)
+    k_min = max(2, int(np.floor(len(data) / 20)))
+
     if len(data) < 100:
-        k_max = int(len(data)/2)
+        k_max = 10  
     elif len(data) < 500:
-        k_max = max(k_min + 15, int(math.sqrt(len(data)) * 2))
-    elif len(data) < 1000:
-        k_max = k_min + 30
-    else: 
-        k_max = k_min + 50
+        k_max = min(30, int(len(data) / 10)) 
+    else:
+        k_max = min(50, int(len(data) / 20))  
+    
+    if k_max <= k_min:
+        k_max = k_min + 20
 
     scores = []
     cluster_range = range(k_min, k_max)
@@ -257,7 +259,7 @@ def calculate_optimal_clusters(data, vehicle_capacity):
     optimal_n_clusters = max(scores, key=lambda x: x[1])[0]
     return optimal_n_clusters
 
-def get_cluster_kmeans(df, vehicle_capacity):
+def get_cluster_kmeans(df):
     """
     Computes a ranking table for collaborations using K-Means clustering
     with an optimal number of clusters determined by silhouette score.
@@ -270,7 +272,7 @@ def get_cluster_kmeans(df, vehicle_capacity):
     - pd.DataFrame: A ranking table with columns ['Rank', 'Company A', 'Company B', 'Shared_Clusters'].
     """
     # Calculate the optimal number of clusters
-    optimal_n_clusters = calculate_optimal_clusters(df[["lat", "lon"]], vehicle_capacity)
+    optimal_n_clusters = calculate_optimal_clusters(df[["lat", "lon"]])
 
     # Apply K-Means clustering
     kmeans = KMeans(n_clusters=optimal_n_clusters, random_state=42)
@@ -309,6 +311,3 @@ def get_cluster_kmeans(df, vehicle_capacity):
     # Reorder columns for clarity
     return partnership_df[['Rank', 'Company A', 'Company B', 'Score']] #, optimal_n_clusters
 
-# ranking = get_cluster_kmeans(df)
-# print("RANKING")
-# print(ranking)
