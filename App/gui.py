@@ -23,11 +23,11 @@ def get_distance_matrix(data):
     # Compute the distance matrix here
     return compute_distance_matrix(data)
 
-st.image("images.png", use_container_width=True)
+st.image("1777.jpg", use_container_width=True)
 
 
 # Title
-st.title(":green[Cost-Saving Parnership Evaluator]")
+st.title(":violet[Cost-Saving Parnership Evaluator]")
 
 # Sidebar inputs and dataset
 vehicle_capacity, cost_per_km, fixed_cost_per_truck, data = render_sidebar()
