@@ -1,11 +1,14 @@
 route_id,company,customer_number
-1,NextGen Technologies,3
-1,NextGen Technologies,5
-1,NextGen Technologies,2
-1,Pioneer Networks,4
-1,Pioneer Networks,3
-1,Pioneer Networks,2
-1,NextGen Technologies,4
-1,NextGen Technologies,1
-1,Pioneer Networks,5
-1,Pioneer Networks,1
+1,Global Corporation,3
+1,Global Technologies,4
+1,Global Technologies,5
+1,Global Technologies,3
+2,Global Technologies,7
+2,Global Corporation,4
+2,Global Corporation,5
+2,Global Technologies,6
+2,Global Technologies,1
+2,Global Corporation,1
+2,Global Corporation,2
+2,Global Corporation,6
+2,Global Technologies,2

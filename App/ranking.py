@@ -85,7 +85,7 @@ def create_partnership_map(df, depot_lat, depot_lon, output_file='map.html'):
 # depot_lon = 5.17215
 # # create_partnership_map(df, depot_lat, depot_lon, output_file='partnership_map.html')
 
-#df = load_data('C:/Users/malou/OneDrive/Documenten/VU/Business Analytics/YEAR 1 - 2024-2025 (Mc)/Project Optimization of Business Processes/Project-OBP/Data/many.csv')
+# df = load_data('C:/Users/malou/OneDrive/Documenten/VU/Business Analytics/YEAR 1 - 2024-2025 (Mc)/Project Optimization of Business Processes/Project-OBP/Data/many.csv')
 
 def get_validation(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, dmatrix, ranking):
     selected_pairs = pd.concat([ranking.head(3), ranking.tail(3)])
@@ -131,12 +131,14 @@ def get_validation(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, dm
     print(f"P-Value: {p_value_dbscan:.2e}")
 
 
-df = load_data('../Data/mini.csv')
+df = load_data('../Data/many.csv')
 dmatrix = compute_distance_matrix(df)
-rankingdbscan = get_dbscan_ranking(df, dmatrix.drop(index='Depot', columns='Depot'), 30, 6) 
-rankingclusterkmeans = get_cluster_kmeans(df, max_clusters=10)
+# rankingdbscan = get_dbscan_ranking(df, dmatrix.drop(index='Depot', columns='Depot'), 30, 6) 
+# rankingclusterkmeans = get_cluster_kmeans(df, max_clusters=10)
+rankingdbscan = get_dbscan_ranking(df, dmatrix.drop(index='Depot', columns='Depot'), 38, 2) 
+rankingclusterkmeans = get_cluster_kmeans(df) # second argument in get_cluster_kmeans is for vehicle capacity
 rankingminmax = get_min_max_ranking(dmatrix, df)
-get_validation(10, 2.5, 50, df, dmatrix, rankingdbscan)
+get_validation(10, 2.5, 50, df, dmatrix, rankingclusterkmeans)
 
 # # Show all rows and columns
 # pd.set_option('display.max_rows', None)  # None means no limit on rows

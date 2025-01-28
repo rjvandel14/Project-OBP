@@ -11,11 +11,11 @@
 # With ranking.py:
 # Validates rankings by solving VRPs for selected partnerships.
 # Provides ground truth for heuristic ranking evaluations.
-
 import folium
 import networkx as nx
 import streamlit as st
 import pandas as pd
+import folium
 from vrpy import VehicleRoutingProblem
 import csv
 
