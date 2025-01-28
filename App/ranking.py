@@ -131,7 +131,7 @@ def get_validation(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, dm
     print(f"P-Value: {p_value_dbscan:.2e}")
 
 
-df = load_data('../Data/many.csv')
+df = load_data('../Data/medium.csv')
 dmatrix = compute_distance_matrix(df)
 # rankingdbscan = get_dbscan_ranking(df, dmatrix.drop(index='Depot', columns='Depot'), 30, 6) 
 # rankingclusterkmeans = get_cluster_kmeans(df, max_clusters=10)
