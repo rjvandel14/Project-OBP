@@ -1,10 +1,8 @@
 import streamlit as st
-import pandas as pd
 from routing import all_cvrp
 from routing import plot_routes_map
 from dss import depot_lat
 from dss import depot_lon
-import csv
 
 
 def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, dmatrix):

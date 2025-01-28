@@ -18,7 +18,7 @@ from gui_components.gui_analysis import render_analysis
 from distancematrix import compute_distance_matrix
 
 # Cache the computation of the distance matrix
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def get_distance_matrix(data):
     # Compute the distance matrix here
     return compute_distance_matrix(data)
