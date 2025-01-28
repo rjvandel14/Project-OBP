@@ -2,7 +2,7 @@ from sklearn.cluster import DBSCAN
 import pandas as pd
 import numpy as np
 
-def get_dbscan_ranking(df, dmatrix, eps, min_samples):
+def get_dbscan_ranking(df, dmatrix):
     """
     Computes a ranking table for collaborations using DBSCAN clustering
     with shared clusters as the ranking criterion.
@@ -16,6 +16,9 @@ def get_dbscan_ranking(df, dmatrix, eps, min_samples):
     Returns:
     - pd.DataFrame: A ranking table with columns ['Rank', 'Company A', 'Company B', 'Shared_Clusters'].
     """
+    # Find min samples and epsilon
+    min_samples = recommend_minPts(len(df))
+    eps = find_optimal_epsilon(dmatrix, min_samples)
 
     # Perform DBSCAN clustering
     dbscan = DBSCAN(eps=eps, min_samples=min_samples, metric="precomputed")
