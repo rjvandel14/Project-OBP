@@ -237,13 +237,15 @@ def calculate_optimal_clusters(data):
     """
     k_min = max(2, int(np.floor(len(data) / 20)))
 
-    # Stel een maximum aantal clusters in op basis van datasetgrootte
     if len(data) < 100:
-        k_max = 10  # Klein aantal clusters voor kleinere datasets
+        k_max = 10  
     elif len(data) < 500:
-        k_max = min(30, int(len(data) / 10))  # Middelgroot aantal clusters voor medium-sized datasets
+        k_max = min(30, int(len(data) / 10)) 
     else:
-        k_max = min(50, int(len(data) / 20))  # Groter aantal clusters voor grotere datasets
+        k_max = min(50, int(len(data) / 20))  
+    
+    if k_max <= k_min:
+        k_max = k_min + 20
 
     scores = []
     cluster_range = range(k_min, k_max)
@@ -309,6 +311,3 @@ def get_cluster_kmeans(df):
     # Reorder columns for clarity
     return partnership_df[['Rank', 'Company A', 'Company B', 'Score']] #, optimal_n_clusters
 
-# ranking = get_cluster_kmeans(df)
-# print("RANKING")
-# print(ranking)
