@@ -10,7 +10,7 @@ import os
 # Load your custom functions
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from dss import load_data
-from distancematrix import compute_distance_matrix
+from osrm_dmatrix import compute_distance_matrix
 
 # Load data and distance matrix
 # df = load_data('C:/Users/daydo/Documents/GitHub/Project-OBP/Data/medium.csv')

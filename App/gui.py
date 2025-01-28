@@ -15,7 +15,7 @@ import streamlit as st
 from gui_components.gui_sidebar import render_sidebar
 from gui_components.gui_ranking import render_ranking
 from gui_components.gui_analysis import render_analysis
-from distancematrix import compute_distance_matrix
+from osrm_dmatrix import compute_distance_matrix
 
 # Cache the computation of the distance matrix
 @st.cache_data

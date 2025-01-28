@@ -45,14 +45,25 @@ def fetch_osrm_distances(batch, ref_batch, osrm_url):
         batch_coords = ';'.join(batch.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
         ref_coords = ';'.join(ref_batch.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
         url = f"{osrm_url}/table/v1/driving/{batch_coords};{ref_coords}?annotations=distance"
-        response = requests.get(url)
+        #print(f"Requesting URL: {url}")
+        
+        # Start timer for request duration
+        start_time = time.time()
+        
+        response = requests.get(url, timeout=30)  # Set timeout to 30 seconds
         response.raise_for_status()
+        
+        elapsed_time = time.time() - start_time
+        print(f"Batch processed in {elapsed_time:.2f} seconds, Response Code: {response.status_code}")
         data = response.json()
         return data.get('distances', None)
+    except requests.exceptions.Timeout:
+        print(f"Request timed out for URL: {url}")
+        return None
     except:
         return None
 
-def OSRM_full_matrix_parallel(data_input, batch_size=50, max_workers=4, osrm_url='http://localhost:5000'):
+def OSRM_full_matrix_parallel(data_input, batch_size=10, max_workers=4, osrm_url='http://localhost:5000'):
     """Compute a full NxN distance matrix using OSRM with parallel requests."""
     depot_row = pd.DataFrame({'name': ['Depot'], 'lat': [depot_lat], 'lon': [depot_lon]})
     data_input = pd.concat([depot_row, data_input], ignore_index=True)
@@ -133,7 +144,7 @@ def plot_heat_dist(matrix):
 # ----------------- Main Execution -----------------
 
 if __name__ == "__main__":
-    df = load_data('../Data/medium.csv')  # Load your dataset
+    df = load_data('../Data/many.csv')  # Load your dataset
     dmatrix = compute_distance_matrix(df)
 
     if dmatrix is not None and not dmatrix.empty:
