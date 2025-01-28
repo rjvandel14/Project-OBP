@@ -41,21 +41,4 @@ def render_sidebar():
     # Load the data
     data = load_data(data=data)
 
-    
-
-    # if st.session_state.uploaded_file is not None:
-    #     try:
-    #         data = pd.read_csv(st.session_state.uploaded_file)
-    #         if data.empty:
-    #             st.error("The uploaded file is empty. Please upload a valid CSV file.")
-    #         elif not all(col in data.columns for col in ["name", "lat", "lon"]):
-    #             st.error("The file must contain the following columns: name, lat, lon.")
-    #     except Exception as e:
-    #         st.error(f"Error loading the uploaded file: {e}")
-    # elif st.session_state.selected_file:
-    #     try:
-    #         data = pd.read_csv(data_files[st.session_state.selected_file])
-    #     except Exception as e:
-    #         st.sidebar.error(f"Error loading predefined file: {e}")
-
     return vehicle_capacity, cost_per_km, fixed_cost_per_truck, data

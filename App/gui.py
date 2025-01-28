@@ -24,7 +24,7 @@ def get_distance_matrix(data):
     return compute_distance_matrix(data)
 
 # Title
-st.title("Logistics Collaboration Dashboard")
+st.title("Cost-Saving Parnership Evaluator")
 
 # Sidebar inputs and dataset
 vehicle_capacity, cost_per_km, fixed_cost_per_truck, data = render_sidebar()

@@ -67,10 +67,10 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
         st.markdown("**Rank**")
 
     with col2:
-        st.markdown("**Company A**")
+        st.markdown("**First company**")
 
     with col3:
-        st.markdown("**Company B**")
+        st.markdown("**Second company**")
 
     with col4:
         st.markdown(

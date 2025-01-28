@@ -12,8 +12,8 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, d
     placeholder_companies = ["Select a company", *unique_companies]
 
     st.subheader("Detailed Analysis")
-    company_a = st.selectbox("Select Company A", placeholder_companies, index=0, key="company_a")
-    company_b = st.selectbox("Select Company B", placeholder_companies, index=0, key="company_b")
+    company_a = st.selectbox("Select first company", placeholder_companies, index=0, key="company_a")
+    company_b = st.selectbox("Select second company", placeholder_companies, index=0, key="company_b")
 
     # Initialize session state for storing results
     if "analysis_results" not in st.session_state:
@@ -50,10 +50,10 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, d
         total_cost_b = results["Total Cost"][1]
         total_cost_collab = results["Total Cost"][2]
 
-        st.write(f'{company_a}: Total costs {total_cost_a}, Fixed truck costs {results["Truck Cost"][0]}, Kilometer costs {results["Driving Cost"][0]}')
-        st.write(f'{company_b}: Total costs {total_cost_b}, Fixed truck costs {results["Truck Cost"][1]}, Kilometer costs {results["Driving Cost"][1]}')
-        st.write(f'Collaboration: Total costs {total_cost_collab}, Fixed truck costs {results["Truck Cost"][2]}, Kilometer costs {results["Driving Cost"][2]}')
-        st.write(f"Total savings: {total_cost_a + total_cost_b - total_cost_collab}")
+        st.write(f'**{company_a}**: Total costs €{total_cost_a:.2f}, Fixed truck costs €{results["Truck Cost"][0]:.2f}, Kilometer costs €{results["Driving Cost"][0]:.2f}')
+        st.write(f'**{company_b}**: Total costs €{total_cost_b:.2f}, Fixed truck costs €{results["Truck Cost"][1]:.2f}, Kilometer costs €{results["Driving Cost"][1]:.2f}')
+        st.write(f'**Collaboration**: Total costs €{total_cost_collab:.2f}, Fixed truck costs €{results["Truck Cost"][2]:.2f}, Kilometer costs €{results["Driving Cost"][2]:.2f}')
+        st.write(f"Total savings: €{total_cost_a + total_cost_b - total_cost_collab:.2f}")
 
     # Display map and download button if available in session state
     if "map_html" in st.session_state:
