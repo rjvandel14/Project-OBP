@@ -25,7 +25,6 @@ def get_distance_matrix(data):
 
 st.image("1777.jpg", use_container_width=True)
 
-
 # Title
 st.title(":violet[Cost-Saving Parnership Evaluator]")
 

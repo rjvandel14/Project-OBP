@@ -11,13 +11,17 @@ data_files = {
 
 def render_sidebar():
     """Renders the sidebar and returns user inputs and loaded data."""
+   
+    # Title
+    st.sidebar.title(":violet[Choose your values:]")
+
     # Sidebar inputs
-    vehicle_capacity = st.sidebar.number_input("Vehicle Capacity", min_value=1, value=10)
-    cost_per_km = st.sidebar.number_input("Costs per KM (€)", min_value=0.0, value=2.5, format="%.2f")
-    fixed_cost_per_truck = st.sidebar.number_input("Fixed Costs per Truck (€)", min_value=0.0, value=50.0, format="%.2f")
+    vehicle_capacity = st.sidebar.number_input("**Vehicle Capacity**", min_value=1, value=10)
+    cost_per_km = st.sidebar.number_input("**Costs per KM (€)**", min_value=0.0, value=2.5, format="%.2f")
+    fixed_cost_per_truck = st.sidebar.number_input("**Fixed Costs per Truck (€)**", min_value=0.0, value=50.0, format="%.2f")
 
     # File uploader
-    uploaded_file = st.sidebar.file_uploader("Upload your CSV file", type=["csv"])
+    uploaded_file = st.sidebar.file_uploader("**Upload your CSV file**", type=["csv"])
 
     # Initialize session state
     if "selected_file" not in st.session_state:
@@ -32,7 +36,7 @@ def render_sidebar():
     else:
         st.session_state.uploaded_file = None
         st.session_state.selected_file = st.sidebar.selectbox(
-            "Select a predefined dataset",
+            "**Select a predefined dataset**",
             options=list(data_files.keys()),
             index=list(data_files.keys()).index(st.session_state.selected_file)
         )

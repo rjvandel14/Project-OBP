@@ -5,6 +5,10 @@ from ranking_functions.ranking_clustering import get_cluster_kmeans
 from ranking_functions.ranking_dbscan import get_dbscan_ranking, recommend_minPts, find_optimal_epsilon
 from routing import all_cvrp
 
+
+
+
+
 def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_truck):
     """Generates and displays the ranking data."""
 
@@ -196,14 +200,17 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
     if len(ranking_data) > st.session_state.rows_to_display:
         col1, col2, col3, col4 = st.columns([0.2, 5, 2.5, 1])  # Center-align the button
         with col2:
-            st.button("Show More", key="show_more_button", on_click=show_more_callback)
+            st.button(":violet[Show More]", key="show_more_button", on_click=show_more_callback)
         with col3:
             csv_data = ranking_data.drop(columns=["Score"]).to_csv(index=False)
             st.download_button(
-                label="Download Complete Ranking",
+                label=":violet[Download Complete Ranking]",
                 data=csv_data,
                 file_name='ranking_data.csv',
                 mime='text/csv',
         )
+    #Place the "Show More" and download csv button below the table
 
     return ranking_data
+
+
