@@ -74,7 +74,7 @@ def fetch_osrm_distances(batch, ref_batch, osrm_url, max_retries=3):
     print(f"Batch failed after {max_retries} attempts. Falling back to Haversine for this batch.")
     return haversine_matrix(batch, ref_batch)
 
-def OSRM_full_matrix_parallel(data_input, batch_size=10, max_workers=4, osrm_url='http://localhost:5000'):
+def OSRM_full_matrix_parallel(data_input, batch_size, max_workers=4, osrm_url='http://localhost:5000'):
     """Compute a full NxN distance matrix using OSRM with parallel requests."""
     depot_row = pd.DataFrame({'name': ['Depot'], 'lat': [depot_lat], 'lon': [depot_lon]})
     data_input = pd.concat([depot_row, data_input], ignore_index=True)
