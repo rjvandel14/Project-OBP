@@ -39,29 +39,40 @@ def haversine_matrix(df):
 
 # ----------------- OSRM Functions -----------------
 
-def fetch_osrm_distances(batch, ref_batch, osrm_url):
-    """Fetch distance matrix for a batch of coordinates using OSRM."""
-    try:
-        batch_coords = ';'.join(batch.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
-        ref_coords = ';'.join(ref_batch.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
-        url = f"{osrm_url}/table/v1/driving/{batch_coords};{ref_coords}?annotations=distance"
-        #print(f"Requesting URL: {url}")
-        
-        # Start timer for request duration
-        start_time = time.time()
-        
-        response = requests.get(url, timeout=30)  # Set timeout to 30 seconds
-        response.raise_for_status()
-        
-        elapsed_time = time.time() - start_time
-        print(f"Batch processed in {elapsed_time:.2f} seconds, Response Code: {response.status_code}")
-        data = response.json()
-        return data.get('distances', None)
-    except requests.exceptions.Timeout:
-        print(f"Request timed out for URL: {url}")
-        return None
-    except:
-        return None
+def fetch_osrm_distances(batch, ref_batch, osrm_url, max_retries=3):
+    """Fetch distance matrix for a batch of coordinates using OSRM, with retries and a fallback to Haversine."""
+    batch_coords = ';'.join(batch.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
+    ref_coords = ';'.join(ref_batch.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
+    url = f"{osrm_url}/table/v1/driving/{batch_coords};{ref_coords}?annotations=distance"
+
+    for attempt in range(max_retries):
+        try:
+            start_time = time.time()
+            response = requests.get(url, timeout=30)
+
+            # If successful, return immediately
+            if response.status_code == 200:
+                elapsed_time = time.time() - start_time
+                print(f"Batch processed in {elapsed_time:.2f} seconds, Response Code: {response.status_code}")
+                return response.json().get('distances', None)
+
+            # If rate limit (429), wait and retry
+            if response.status_code == 429:
+                retry_after = int(response.headers.get("Retry-After", 2))  # Retry-After header or default to 2s
+                print(f"Rate limit hit. Retrying in {retry_after} seconds...")
+                time.sleep(retry_after)
+
+        except requests.exceptions.Timeout:
+            print(f"Timeout on attempt {attempt + 1} for URL: {url}")
+            time.sleep(2 ** attempt)  # Exponential backoff: 2s, 4s, 8s
+
+        except requests.exceptions.RequestException as e:
+            print(f"Request failed on attempt {attempt + 1}: {e}")
+            time.sleep(2 ** attempt)  # Retry with backoff
+
+    # Fallback to Haversine if all retries fail
+    print(f"Batch failed after {max_retries} attempts. Falling back to Haversine for this batch.")
+    return haversine_matrix(batch, ref_batch)
 
 def OSRM_full_matrix_parallel(data_input, batch_size=10, max_workers=4, osrm_url='http://localhost:5000'):
     """Compute a full NxN distance matrix using OSRM with parallel requests."""
