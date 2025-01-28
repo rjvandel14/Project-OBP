@@ -3,6 +3,9 @@ import math
 import seaborn as sns
 import matplotlib.pyplot as plt
 import requests
+import numpy as np
+from concurrent.futures import ThreadPoolExecutor
+import time
 
 from dss import depot_lat
 from dss import depot_lon
@@ -83,11 +86,74 @@ def plot_heat_dist(matrix):
     plt.tight_layout()
     plt.show()
 
-# # Load data and compute distance matrix
-# df = load_data('../Data/many.csv')
-# dmatrix = compute_distance_matrix(df)
+def fetch_osrm_distances(batch, ref_batch):
+    """Fetch distance matrix for a batch vs. a reference batch."""
+    batch_coords = ';'.join(batch.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
+    ref_coords = ';'.join(ref_batch.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
+    
+    osrm_url = f'http://localhost:5000/table/v1/driving/{batch_coords};{ref_coords}?annotations=distance'
+    response = requests.get(osrm_url)
+    
+    if response.status_code == 200:
+        data = response.json()
+        if 'distances' in data:
+            return data['distances']
+        else:
+            raise ValueError("Missing 'distances' field in OSRM response.")
+    else:
+        raise ConnectionError(f"OSRM server error: {response.status_code}, {response.text}")
 
-# if dmatrix is not None and not dmatrix.empty:
-#     plot_heat_dist(dmatrix)
-# else:
-#     print("Failed to compute a valid distance matrix.")
+def OSRM_full_matrix_parallel(data_input, batch_size=50, max_workers=4):
+    """Calculate a full NxN distance matrix using parallel requests."""
+    depot_row = pd.DataFrame({'name': ['Depot'], 'lat': [depot_lat], 'lon': [depot_lon]})
+    data_input = pd.concat([depot_row, data_input], ignore_index=True)
+    # Ensure indices are reset for consistency
+    data_input = data_input.reset_index(drop=True)
+
+    # Create empty NxN matrix
+    n = len(data_input)
+    full_matrix = np.zeros((n, n))
+
+    # Create batches
+    batches = [data_input.iloc[i:i + batch_size] for i in range(0, n, batch_size)]
+
+    # Process batches in parallel
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {}
+        
+        for i, batch in enumerate(batches):
+            for j, ref_batch in enumerate(batches):
+                # Submit the task for parallel execution
+                future = executor.submit(fetch_osrm_distances, batch, ref_batch)
+                futures[(i, j)] = (future, batch.index, ref_batch.index)
+        
+        # Collect results
+        for (i, j), (future, batch_indices, ref_indices) in futures.items():
+            try:
+                distances = future.result()  # Get result from the future
+                for k, row_index in enumerate(batch_indices):
+                    for l, col_index in enumerate(ref_indices):
+                        full_matrix[row_index, col_index] = distances[k][l]
+            except Exception as e:
+                print(f"Error processing batch ({i}, {j}): {e}")
+                continue
+
+    # Convert to kilometers and return as a DataFrame
+    full_matrix = full_matrix / 1000  # Convert meters to kilometers
+    return pd.DataFrame(full_matrix, index=data_input['name'], columns=data_input['name'])
+
+
+# Load data and compute distance matrix
+df = load_data('../Data/many.csv')
+#dmatrix = compute_distance_matrix(df)
+dmatrix = OSRM_full_matrix_parallel(df)
+
+if dmatrix is not None and not dmatrix.empty:
+    print(dmatrix)
+    plot_heat_dist(dmatrix)
+else:
+    print("Failed to compute a valid distance matrix.")
+
+#df = load_data('../Data/many.csv')
+
+

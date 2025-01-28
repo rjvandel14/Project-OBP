@@ -1,6 +1,12 @@
 # HTML
 App/routes_map.html 
 App/partnership_map.html
+App/cluster_map.html
+
+# Negeer OSM-bestanden
+data/*.osm.pbf
+data/netherlands-latest.osrm*
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

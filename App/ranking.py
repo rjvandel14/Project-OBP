@@ -14,7 +14,7 @@ import folium
 import pandas as pd
 import streamlit as st
 from dss import load_data
-from distancematrix import compute_distance_matrix
+from osrm_dmatrix import compute_distance_matrix
 from routing import all_cvrp
 from scipy.stats import spearmanr
 from ranking_functions.ranking_minmax import get_min_max_ranking
