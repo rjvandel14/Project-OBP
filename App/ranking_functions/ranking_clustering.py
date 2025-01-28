@@ -260,46 +260,45 @@ def get_cluster_kmeans(df, dmatrix):
     Returns:
     - pd.DataFrame: A ranking table with ['Rank', 'Company A', 'Company B', 'Shared_Clusters'].
     """
+    
     full_dmatrix = dmatrix.copy()
     cluster_data = df.copy()
-    # Step 1: Ensure unique customer IDs for companies
+
+    # Ensure unique customer IDs for companies
     cluster_data["customer_id"] = cluster_data.groupby("name").cumcount()
     cluster_data["name"] = cluster_data["name"] + "_" + cluster_data["customer_id"].astype(str)
     cluster_data.drop(columns=["customer_id"], inplace=True)  # Remove temp column
 
-    dmatrix_clustering = dmatrix.drop(index="Depot", columns="Depot", errors="ignore")
+    #remove depot from dmatrix
+    dmatrix_clustering = full_dmatrix.drop(index="Depot", columns="Depot", errors="ignore")
 
+    # Ensure matching name column
     dmatrix_clustering.index = cluster_data["name"]
     dmatrix_clustering.columns = cluster_data["name"]
 
-    # ✅ Calculate the optimal number of clusters
+    #Calculate the optimal number of clusters
     optimal_n_clusters = calculate_optimal_clusters(cluster_data, dmatrix_clustering)
 
-    # ✅ Apply K-Means clustering
+    #Apply K-Means clustering
     kmeans = KMeans(n_clusters=optimal_n_clusters, random_state=42)
     cluster_data["KMeans Cluster"] = kmeans.fit_predict(cluster_data[["lat", "lon"]])
 
-    # ✅ Reassign customers to closest clusters based on *OSRM distances*
+    #Reassign customers to closest clusters based on *OSRM distances*
     for idx, row in cluster_data.iterrows():
         min_dist = float("inf")
         best_cluster = None
         for cluster in range(optimal_n_clusters):
             centroid_idx = cluster_data[cluster_data["KMeans Cluster"] == cluster].index[0]  # Representative point
             
-            # ✅ Use dmatrix_clustering (no depot) to get customer distances
+            #Use dmatrix_clustering (no depot) to get customer distances
             osrm_dist = dmatrix_clustering.loc[row["name"], cluster_data.loc[centroid_idx, "name"]]
-            print(osrm_dist)
             if osrm_dist < min_dist:
                 min_dist = osrm_dist
                 best_cluster = cluster
 
         cluster_data.at[idx, "KMeans Cluster"] = best_cluster
-    print(cluster_data)
-    dmatrix = full_dmatrix
     cluster_data["name"] = df["name"].copy()
-    #cluster_data.columns = df["name"]
-    print(cluster_data)
-    # ✅ Use full_dmatrix (with depot) for VRPy to avoid "Sink and Source Not Connected" error
+
     # Calculate shared clusters between companies
     partnership_scores = []
     company_names = cluster_data['name'].unique()  # Extract unique company names
@@ -331,4 +330,4 @@ def get_cluster_kmeans(df, dmatrix):
     partnership_df['Rank'] = partnership_df.index + 1
 
     # Reorder columns for clarity
-    return partnership_df[['Rank', 'Company A', 'Company B', 'Score']] #, optimal_n_clusters 
+    return partnership_df[['Rank', 'Company A', 'Company B', 'Score']] 
