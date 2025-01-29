@@ -22,25 +22,14 @@ from osrm_dmatrix import compute_distance_matrix
 # # Exclude depot row/column from the distance matrix
 # dmatrix_without_depot = dmatrix.iloc[1:, 1:]  # Assuming the depot is the first row/column
 
-# Function to calculate Silhouette Scores for K-Means
-def calculate_silhouette_scores(data, max_clusters=10):
-    scores = []
-    cluster_range = range(2, max_clusters + 1)
-    for n_clusters in cluster_range:
-        kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-        cluster_labels = kmeans.fit_predict(data)
-        score = silhouette_score(data, cluster_labels)
-        scores.append(score)
-    return cluster_range, scores
-
 # Function for DBSCAN clustering using a distance matrix
-def run_dbscan_with_matrix(dmatrix, eps=0.01, min_samples=5):
-    """
-    Perform DBSCAN clustering using a precomputed distance matrix.
-    """
-    dbscan = DBSCAN(eps=eps, min_samples=min_samples, metric="precomputed")
-    cluster_labels = dbscan.fit_predict(dmatrix)
-    return cluster_labels
+# def run_dbscan_with_matrix(dmatrix, eps=0.01, min_samples=5):
+#     """
+#     Perform DBSCAN clustering using a precomputed distance matrix.
+#     """
+#     dbscan = DBSCAN(eps=eps, min_samples=min_samples, metric="precomputed")
+#     cluster_labels = dbscan.fit_predict(dmatrix)
+#     return cluster_labels
 
 # Function for visualizing clustering results with cluster clouds
 def create_customer_and_cluster_map_with_clouds(df, cluster_assignments, depot_lat, depot_lon, method):
@@ -224,7 +213,7 @@ def calculate_partnership_rankings(df, cluster_column):
 # comparison_df = df[["lat", "lon", "KMeans Cluster", "DBSCAN Cluster"]]
 # st.map(comparison_df)
 
-def calculate_optimal_clusters(data):
+def calculate_optimal_clusters(data, dmatrix):
     """
     Calculate the optimal number of clusters using the silhouette score.
 
@@ -251,43 +240,75 @@ def calculate_optimal_clusters(data):
     cluster_range = range(k_min, k_max)
     for n_clusters in cluster_range:
         kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-        cluster_labels = kmeans.fit_predict(data)
-        score = silhouette_score(data, cluster_labels)
+        cluster_labels = kmeans.fit_predict(data[["lat", "lon"]])
+        score = silhouette_score(dmatrix.drop(index="Depot",columns = "Depot", errors = "ignore" ), cluster_labels, metric = 'precomputed')
         scores.append((n_clusters, score))
     
     # Find the number of clusters with the maximum silhouette score
     optimal_n_clusters = max(scores, key=lambda x: x[1])[0]
     return optimal_n_clusters
 
-def get_cluster_kmeans(df):
+def get_cluster_kmeans(df, dmatrix):
     """
     Computes a ranking table for collaborations using K-Means clustering
-    with an optimal number of clusters determined by silhouette score.
+    with an optimal number of clusters determined by OSRM-based silhouette score.
 
     Parameters:
-    - df (pd.DataFrame): DataFrame with company and customer data. Must include 'name', 'lat', and 'lon' columns.
-    - max_clusters (int): Maximum number of clusters to evaluate.
+    - df (pd.DataFrame): DataFrame with customer and company data.
+    - dmatrix (pd.DataFrame): Precomputed OSRM-based distance matrix.
 
     Returns:
-    - pd.DataFrame: A ranking table with columns ['Rank', 'Company A', 'Company B', 'Shared_Clusters'].
+    - pd.DataFrame: A ranking table with ['Rank', 'Company A', 'Company B', 'Shared_Clusters'].
     """
-    # Calculate the optimal number of clusters
-    optimal_n_clusters = calculate_optimal_clusters(df[["lat", "lon"]])
+    
+    full_dmatrix = dmatrix.copy()
+    cluster_data = df.copy()
 
-    # Apply K-Means clustering
+    # Ensure unique customer IDs for companies
+    cluster_data["customer_id"] = cluster_data.groupby("name").cumcount()
+    cluster_data["name"] = cluster_data["name"] + "_" + cluster_data["customer_id"].astype(str)
+    cluster_data.drop(columns=["customer_id"], inplace=True)  # Remove temp column
+
+    #remove depot from dmatrix
+    dmatrix_clustering = full_dmatrix.drop(index="Depot", columns="Depot", errors="ignore")
+
+    # Ensure matching name column
+    dmatrix_clustering.index = cluster_data["name"]
+    dmatrix_clustering.columns = cluster_data["name"]
+
+    #Calculate the optimal number of clusters
+    optimal_n_clusters = calculate_optimal_clusters(cluster_data, dmatrix_clustering)
+
+    #Apply K-Means clustering
     kmeans = KMeans(n_clusters=optimal_n_clusters, random_state=42)
-    df["KMeans Cluster"] = kmeans.fit_predict(df[["lat", "lon"]])
+    cluster_data["KMeans Cluster"] = kmeans.fit_predict(cluster_data[["lat", "lon"]])
+
+    #Reassign customers to closest clusters based on *OSRM distances*
+    for idx, row in cluster_data.iterrows():
+        min_dist = float("inf")
+        best_cluster = None
+        for cluster in range(optimal_n_clusters):
+            centroid_idx = cluster_data[cluster_data["KMeans Cluster"] == cluster].index[0]  # Representative point
+            
+            #Use dmatrix_clustering (no depot) to get customer distances
+            osrm_dist = dmatrix_clustering.loc[row["name"], cluster_data.loc[centroid_idx, "name"]]
+            if osrm_dist < min_dist:
+                min_dist = osrm_dist
+                best_cluster = cluster
+
+        cluster_data.at[idx, "KMeans Cluster"] = best_cluster
+    cluster_data["name"] = df["name"].copy()
 
     # Calculate shared clusters between companies
     partnership_scores = []
-    company_names = df['name'].unique()  # Extract unique company names
+    company_names = cluster_data['name'].unique()  # Extract unique company names
 
     for i, company1 in enumerate(company_names):
         for j, company2 in enumerate(company_names):
             if i < j:  # Ensure each pair is only processed once
                 # Get clusters for both companies
-                clusters1 = set(df[df['name'] == company1]["KMeans Cluster"])
-                clusters2 = set(df[df['name'] == company2]["KMeans Cluster"])
+                clusters1 = set(cluster_data[cluster_data['name'] == company1]["KMeans Cluster"])
+                clusters2 = set(cluster_data[cluster_data['name'] == company2]["KMeans Cluster"])
 
                 # Count shared clusters
                 shared_clusters = len(clusters1.intersection(clusters2))
@@ -309,5 +330,4 @@ def get_cluster_kmeans(df):
     partnership_df['Rank'] = partnership_df.index + 1
 
     # Reorder columns for clarity
-    return partnership_df[['Rank', 'Company A', 'Company B', 'Score']] #, optimal_n_clusters
-
+    return partnership_df[['Rank', 'Company A', 'Company B', 'Score']] 
