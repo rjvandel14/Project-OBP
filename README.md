@@ -47,9 +47,8 @@ pip install -r requirements.txt
 
 ### 1. Start the OSRM Server
 
-Open Docker Desktop
-
-Use Docker Compose to build and run the OSRM server:
+1. Open Docker Desktop
+2. Use Docker Compose to build and run the OSRM server:
 
 ```bash
 docker-compose up --build
