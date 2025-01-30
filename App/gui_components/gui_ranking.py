@@ -126,7 +126,7 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
 
     st.markdown("<hr style='border: 1px solid #ccc; margin-top: 0px; margin-bottom: 10px;'>", unsafe_allow_html=True)
 
-    #Loop trough rows to show data
+    # Loop through rows to show data
     for index, row in rows_to_display.iterrows():
         col1, col2, col3, col4 = st.columns([1, 2, 2, 1.5])  # Adjust column widths
 
@@ -140,48 +140,59 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
             st.write(f"{row['Company B']}")  # Display Company B
 
         with col4:
-            # Toggle the state when the button is clicked
+            # Analyze button
             if st.button(f"Analyze {index + 1}", key=f"analyze_{index}"):
-                # Reset all toggle states to False
-                for key in st.session_state.toggle_states.keys():
-                    st.session_state.toggle_states[key] = False
-                # Set the clicked row's state to True
-                st.session_state.toggle_states[index] = True
-
-        # Show or hide analysis based on the toggle state
-        if st.session_state.toggle_states.get(index, False):
-            # Expand the analysis section
-            with st.expander(f"Analysis for {row['Company A']} ↔ {row['Company B']}", expanded=True):
-                st.write(f"**Analyzing collaboration between {row['Company A']} and {row['Company B']}**")
-                # Perform recalculation only if no results exist for this index
                 if index not in st.session_state.results:
-                    timelimit = 10 + 0.5 * data[data['name'].isin(row['Company A'], row['Company B'])].copy()
-                    results = all_cvrp(
-                        vehicle_capacity,
-                        cost_per_km,
-                        fixed_cost_per_truck,
-                        row["Company A"],
-                        row["Company B"],
-                        data,
-                        dmatrix,
-                        timelimit,
-                    )
-                    st.session_state.results[index] = results  # Save results in session state
+                    # Run analysis inside the expander
+                    st.session_state.toggle_states[index] = True
 
-        # Retrieve results from session state
-        results = st.session_state.results.get(index)
-        if results:
-            # Always display results if they exist
-            with st.expander(f"Analysis Results for {row['Company A']} ↔ {row['Company B']}, result may be suboptimal because of time limit ", expanded=True):
-                total_cost_a = results["Total Cost"][0]
-                total_cost_b = results["Total Cost"][1]
-                total_cost_collab = results["Total Cost"][2]
+        # Show analysis only if the user clicks "Analyze"
+        if st.session_state.toggle_states.get(index, False):
+            with st.expander(f"Analysis for {row['Company A']} ↔ {row['Company B']}", expanded=True):
+                
+                # If no results exist yet, show the spinner
+                if index not in st.session_state.results:
+                    with st.spinner(f"Analyzing collaboration between {row['Company A']} and {row['Company B']}..."):
+                        results = all_cvrp(
+                            vehicle_capacity,
+                            cost_per_km,
+                            fixed_cost_per_truck,
+                            row["Company A"],
+                            row["Company B"],
+                            data,
+                            dmatrix,
+                            True,
+                        )
+                        st.session_state.results[index] = results  # Save results persistently
+                
+                # Retrieve and display results
+                results = st.session_state.results.get(index)
+                if results:
+                    st.subheader(f"Analysis Results for {row['Company A']} ↔ {row['Company B']}")
 
-                st.write(f'{row["Company A"]}: Total costs {total_cost_a}, Fixed truck costs {results["Truck Cost"][0]}, Kilometer costs {results["Driving Cost"][0]}')
-                st.write(f'{row["Company B"]}: Total costs {total_cost_b}, Fixed truck costs {results["Truck Cost"][1]}, Kilometer costs {results["Driving Cost"][1]}')
-                st.write(f'Collaboration: Total costs {total_cost_collab}, Fixed truck costs {results["Truck Cost"][2]}, Kilometer costs {results["Driving Cost"][2]}')
-                st.write(f"Total savings: {total_cost_a + total_cost_b - total_cost_collab}")
+                    # Prepare data for the table
+                    analysis_data = {
+                        "Category": [row["Company A"], row["Company B"], "Collaboration"],
+                        "Total Costs (€)": [results["Total Cost"][0], results["Total Cost"][1], results["Total Cost"][2]],
+                        "Fixed Truck Costs (€)": [results["Truck Cost"][0], results["Truck Cost"][1], results["Truck Cost"][2]],
+                        "Kilometer Costs (€)": [results["Driving Cost"][0], results["Driving Cost"][1], results["Driving Cost"][2]]
+                    }
 
+                    # Convert to DataFrame and format
+                    df = pd.DataFrame(analysis_data)
+                    df.set_index("Category", inplace=True)  # Remove default numeric index
+                    df = df.style.format({
+                        "Total Costs (€)": "{:.2f}", 
+                        "Fixed Truck Costs (€)": "{:.2f}", 
+                        "Kilometer Costs (€)": "{:.2f}"
+                    })
+
+                    # Display the table
+                    st.table(df)
+
+                    # Calculate and display total savings separately
+                    total_savings = results["Total Cost"][0] + results["Total Cost"][1] - results["Total Cost"][2]
+                    st.markdown(f"**:violet[Total savings: €{total_savings:.2f}]**")
 
         st.markdown("<hr style='border: 1px solid #ccc; margin-top: -10px; margin-bottom: 10px;'>", unsafe_allow_html=True)
 
@@ -196,20 +207,23 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
         else:
             st.session_state.rows_to_display += 50  # add 50 rows after
 
-    # Place the "Show More" and download csv button below the table
-    if len(ranking_data) > st.session_state.rows_to_display:
-        col1, col2, col3, col4 = st.columns([0.2, 5, 2.5, 1])  # Center-align the button
-        with col2:
+    # Create a two-column layout for buttons
+    col1, col2 = st.columns([4, 2])  # Equal width columns
+
+    # Show the "Show More" button only if there are more rows to display
+    with col1:
+        if len(ranking_data) > st.session_state.rows_to_display:
             st.button(":violet[Show More]", key="show_more_button", on_click=show_more_callback)
-        with col3:
-            csv_data = ranking_data.drop(columns=["Score"]).to_csv(index=False)
-            st.download_button(
-                label=":violet[Download Complete Ranking]",
-                data=csv_data,
-                file_name='ranking_data.csv',
-                mime='text/csv',
+
+    # Always show the "Download Complete Ranking" button
+    with col2:
+        csv_data = ranking_data.drop(columns=["Score"]).to_csv(index=False)
+        st.download_button(
+            label=":violet[Download Complete Ranking]",
+            data=csv_data,
+            file_name='ranking_data.csv',
+            mime='text/csv',
         )
-    #Place the "Show More" and download csv button below the table
 
     return ranking_data
 
