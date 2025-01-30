@@ -40,7 +40,8 @@ def OSRM(data_input):
     depot_row = pd.DataFrame({'name': ['Depot'], 'lat': [depot_lat], 'lon': [depot_lon]})
     df = pd.concat([depot_row, data_input], ignore_index=True)
 
-    osrm_url = 'http://router.project-osrm.org/table/v1/driving/'
+    #osrm_url = 'http://router.project-osrm.org/table/v1/driving/'
+    osrm_url = 'http://localhost:5000/table/v1/driving/'
     coordinates = ';'.join(df.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
 
     response = requests.get(f"{osrm_url}{coordinates}?annotations=distance")
@@ -143,17 +144,21 @@ def OSRM_full_matrix_parallel(data_input, batch_size=50, max_workers=4):
     return pd.DataFrame(full_matrix, index=data_input['name'], columns=data_input['name'])
 
 
-# Load data and compute distance matrix
-df = load_data('../Data/many.csv')
-#dmatrix = compute_distance_matrix(df)
-dmatrix = OSRM_full_matrix_parallel(df)
+ # Load data and compute distance matrix
+# df = load_data('../Data/medium.csv')
+# #dmatrix = compute_distance_matrix(df)
+# dmatrix = OSRM(df)
+# dmatrixParallel = OSRM_full_matrix_parallel(df)
 
-if dmatrix is not None and not dmatrix.empty:
-    print(dmatrix)
-    plot_heat_dist(dmatrix)
-else:
-    print("Failed to compute a valid distance matrix.")
+# print(dmatrix)
+# print(dmatrixParallel)
+# print(dmatrixParallel - dmatrix)
 
-#df = load_data('../Data/many.csv')
+# if dmatrix is not None and not dmatrix.empty:
+#     print(dmatrix)
+#     plot_heat_dist(dmatrix)
+# else:
+#     print("Failed to compute a valid distance matrix.")
+
 
 
