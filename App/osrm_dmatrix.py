@@ -43,7 +43,15 @@ def fetch_osrm_distances(batch, ref_batch, osrm_url, max_retries=3):
     """Fetch distance matrix for a batch of coordinates using OSRM, with retries and a fallback to Haversine."""
     batch_coords = ';'.join(batch.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
     ref_coords = ';'.join(ref_batch.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
-    url = f"{osrm_url}/table/v1/driving/{batch_coords};{ref_coords}?annotations=distance"
+    #url = f"{osrm_url}/table/v1/driving/{batch_coords};{ref_coords}?annotations=distance"
+
+    sources = ';'.join(str(i) for i in range(len(batch)))
+    destinations = ';'.join(str(i + len(batch)) for i in range(len(ref_batch)))
+
+    url = (
+        f"{osrm_url}/table/v1/driving/{batch_coords};{ref_coords}?"
+        f"annotations=distance&sources={sources}&destinations={destinations}"
+    )
 
     for attempt in range(max_retries):
         try:
