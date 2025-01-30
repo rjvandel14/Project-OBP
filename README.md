@@ -4,12 +4,6 @@
 
 This project is a logistics collaboration dashboard designed to evaluate potential partnerships between logistics companies. It leverages data-driven approaches to compute distance matrices, analyze collaboration opportunities, and provide visualizations for cost and resource savings.
 
-The application supports:
-
-- Computing distance matrices using the public OSRM API with fallback to Haversine calculations.
-- Ranking potential partnerships based on cost savings and other metrics.
-- Detailed analysis of selected partnerships.
-
 ---
 
 ## Prerequisites
@@ -38,9 +32,19 @@ pip install -r requirements.txt
 
 ### 3. OSRM Setup
 
-#### Using Preprocessed Files 
+#### Option 1: Using Preprocessed Files (Recommended)
 
-1. Visit the [Geofabrik website]([https://download.geofabrik.de/]) https://download.geofabrik.de/europe/netherlands.html and download the `.osm.pbf` file.
+1. Download the `osrm_files.zip` provided via email.
+2. Unzip the file into the `data/` directory inside the `app` folder:
+   ```bash
+   unzip osrm_files.zip -d app/data/
+   ```
+
+---
+
+#### Option 2: Download and Preprocess the Files Yourself
+
+1. Visit the [Geofabrik website] https://download.geofabrik.de/europe/netherlands.html and download the `.osm.pbf` file.
 
 2. Preprocess the map using OSRM tools:
 
@@ -50,7 +54,7 @@ pip install -r requirements.txt
    osrm-customize /path/to/map.osrm
    ```
 
-3. Place all these files in the data/ directory inside the app folder.
+4. Place all these files in the data/ directory inside the app folder.
 
 ---
 
