@@ -12,7 +12,14 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, d
     unique_companies = sorted(data["name"].unique())
     placeholder_companies = ["Select a company", *unique_companies]
 
-    st.subheader("Detailed Analysis")
+    col1, col2 = st.columns([2,1])
+    with col1:
+        st.subheader("Detailed Analysis")
+
+    with col2:
+        timelimit = st.number_input("**Stop Calculation after (min)**", min_value=1, value=10)*60
+
+
     company_a = st.selectbox("**Select first company**", placeholder_companies, index=0, key="company_a")
     company_b = st.selectbox("**Select second company**", placeholder_companies, index=0, key="company_b")
 
@@ -30,13 +37,13 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, d
             # Generate a unique key for the selected companies
             analysis_key = f"{company_a}_{company_b}"
             if analysis_key not in st.session_state.analysis_results:
-                results = all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, company_b, data, dmatrix)
+                results = all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, company_b, data, dmatrix, timelimit)
                 st.session_state.analysis_results[analysis_key] = results
             else:
                 results = st.session_state.analysis_results[analysis_key]
 
             # Generate the map and CSV file
-            map, csv_file_path = plot_routes_map(data, depot_lat, depot_lon, company_a, company_b, results["Routes"][2], output_file='routes_map.html')
+            map, csv_file_path = plot_routes_map(data, depot_lat, depot_lon, company_a, company_b, results["Routes"][1], output_file='routes_map.html')
 
             # Store map and CSV path in session state
             st.session_state["map_html"] = map._repr_html_()

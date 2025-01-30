@@ -153,9 +153,9 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
             # Expand the analysis section
             with st.expander(f"Analysis for {row['Company A']} ↔ {row['Company B']}", expanded=True):
                 st.write(f"**Analyzing collaboration between {row['Company A']} and {row['Company B']}**")
-
                 # Perform recalculation only if no results exist for this index
                 if index not in st.session_state.results:
+                    timelimit = 10 + 0.5 * data[data['name'].isin(row['Company A'], row['Company B'])].copy()
                     results = all_cvrp(
                         vehicle_capacity,
                         cost_per_km,
@@ -164,7 +164,7 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
                         row["Company B"],
                         data,
                         dmatrix,
-                        True,
+                        timelimit,
                     )
                     st.session_state.results[index] = results  # Save results in session state
 
