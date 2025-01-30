@@ -10,7 +10,7 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, d
     """Handles company selection and performs collaboration analysis."""
     # Dropdowns for company selection
     unique_companies = sorted(data["name"].unique())
-    placeholder_companies = ["Select a company", *unique_companies]
+    placeholder_companies = ["Select or type", *unique_companies]
 
     col1, col2 = st.columns([2,1])
     with col1:
@@ -29,7 +29,7 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, d
 
     # Analyze collaboration
     if st.button(":violet[Analyze Collaboration]"):
-        if company_a == "Select a company" or company_b == "Select a company":
+        if company_a == "Select or type" or company_b == "Select or type":
             st.error("Please select valid companies for both dropdowns.")
         elif company_a == company_b:
             st.error("Please select two different companies.")
@@ -55,15 +55,6 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, d
         results = st.session_state.analysis_results[analysis_key]
         st.subheader("Analysis Results")
 
-        # total_cost_a = results["Total Cost"][0]
-        # total_cost_b = results["Total Cost"][1]
-        # total_cost_collab = results["Total Cost"][2]
-
-        # st.write(f'**{company_a}**: Total costs €{total_cost_a:.2f}, Fixed truck costs €{results["Truck Cost"][0]:.2f}, Kilometer costs €{results["Driving Cost"][0]:.2f}')
-        # st.write(f'**{company_b}**: Total costs €{total_cost_b:.2f}, Fixed truck costs €{results["Truck Cost"][1]:.2f}, Kilometer costs €{results["Driving Cost"][1]:.2f}')
-        # st.write(f'**Collaboration**: Total costs €{total_cost_collab:.2f}, Fixed truck costs €{results["Truck Cost"][2]:.2f}, Kilometer costs €{results["Driving Cost"][2]:.2f}')
-        # st.write(f'**:violet[Total savings: €{total_cost_a + total_cost_b - total_cost_collab:.2f}]**')
-        
         # Prepare data for the table
         data = {
             "Category": [company_a, company_b, "Collaboration"],
