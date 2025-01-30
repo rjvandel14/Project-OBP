@@ -7,7 +7,7 @@ import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 import time
 
-from dss import depot_lat, depot_lon, load_data
+from dss import depot_lat, depot_lon
 
 # ----------------- Helper Functions -----------------
 
@@ -43,7 +43,6 @@ def fetch_osrm_distances(batch, ref_batch, osrm_url, max_retries=3):
     """Fetch distance matrix for a batch of coordinates using OSRM, with retries and a fallback to Haversine."""
     batch_coords = ';'.join(batch.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
     ref_coords = ';'.join(ref_batch.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
-    #url = f"{osrm_url}/table/v1/driving/{batch_coords};{ref_coords}?annotations=distance"
 
     sources = ';'.join(str(i) for i in range(len(batch)))
     destinations = ';'.join(str(i + len(batch)) for i in range(len(ref_batch)))
@@ -160,15 +159,4 @@ def plot_heat_dist(matrix):
     plt.tight_layout()
     plt.show()
 
-# ----------------- Main Execution -----------------
 
-if __name__ == "__main__":
-    df = load_data('../Data/many.csv')  # Load your dataset
-    dmatrix = compute_distance_matrix(df)
-
-    if dmatrix is not None and not dmatrix.empty:
-        print("Distance matrix successfully calculated!")
-        print(dmatrix)
-        #plot_heat_dist(dmatrix)
-    else:
-        print("Failed to compute the distance matrix.")

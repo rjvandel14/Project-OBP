@@ -29,16 +29,3 @@ def load_data(file_path=None, data=None):
     else:
         raise ValueError("Either 'file_path' or 'data' must be provided.")
 
-
-# def load_data(file_path):
-#     # Load data and return it
-#     data = pd.read_csv(file_path, skiprows=1, names=["name", "latitude", "longitude"])
-#     return data
-
-#df = load_data('../Data/mini.csv')
-#df = load_data('../Data/medium.csv')
-
-## USE YOUR OWN FILE PATH 
-#df = load_data('C:/Users/malou/OneDrive/Documenten/VU/Business Analytics/YEAR 1 - 2024-2025 (Mc)/Project Optimization of Business Processes/Project-OBP/Data/mini.csv')
-
-
