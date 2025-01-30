@@ -1,6 +1,7 @@
-import streamlit as st
 import pandas as pd
+import streamlit as st
 from dss import load_data
+
 
 data_files = {
     "Mini Dataset": "../Data/mini.csv",
@@ -10,9 +11,6 @@ data_files = {
 }
 
 def render_sidebar():
-    """Renders the sidebar and returns user inputs and loaded data."""
-   
-    # Title
     st.sidebar.title(":violet[Choose your values:]")
 
     # Sidebar inputs

@@ -1,25 +1,11 @@
-import streamlit as st
 import pandas as pd
-from ranking_functions.ranking_minmax import get_min_max_ranking
-from ranking_functions.ranking_clustering import get_cluster_kmeans
-from ranking_functions.ranking_dbscan import get_dbscan_ranking, recommend_minPts, find_optimal_epsilon
+import streamlit as st
 from routing import all_cvrp
-
-
-
+from ranking_functions.ranking_clustering import get_cluster_kmeans
 
 
 def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_truck):
-    """Generates and displays the ranking data."""
-
-    #dmatrix_without_depot = dmatrix.drop(index='Depot', columns='Depot')
-
-    #ranking_data = get_min_max_ranking(dmatrix, data)
     ranking_data = get_cluster_kmeans(data, dmatrix)
-    # min_samples = recommend_minPts(len(data) -1)
-    # eps = find_optimal_epsilon(dmatrix_without_depot, min_samples)
-    # print("eps", eps)
-    # ranking_data = get_dbscan_ranking(data,dmatrix_without_depot,eps,min_samples)
 
     # Create two columns: one for the title and the other for the filter options
     col1, col2 = st.columns([2, 1]) 
@@ -41,7 +27,7 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
     if "rows_to_display" not in st.session_state:
         st.session_state.rows_to_display = 5  # Start with the top 5 rows
     if "click_count" not in st.session_state:
-        st.session_state.click_count = 0  # Initialiseer de klik-teller
+        st.session_state.click_count = 0  # Initialize click_count
     if "toggle_states" not in st.session_state:
         st.session_state.toggle_states = {}
     if "results" not in st.session_state:
@@ -64,8 +50,8 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
     # Decide how many rows to display
     rows_to_display = ranking_data.head(st.session_state.rows_to_display)
 
-    #Show headers
-    col1, col2, col3, col4 = st.columns([1, 2, 2, 1.5])  # Adjust column widths
+    # Show headers
+    col1, col2, col3, col4 = st.columns([1, 2, 2, 1.5]) 
 
     with col1:
         st.markdown("**Rank**")
@@ -134,10 +120,10 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
             st.write(f"{row['Rank']}")  # Display the rank
 
         with col2:
-            st.write(f"{row['Company A']}")  # Display Company A
+            st.write(f"{row['Company A']}")  # First company 
 
         with col3:
-            st.write(f"{row['Company B']}")  # Display Company B
+            st.write(f"{row['Company B']}")  # Second company
 
         with col4:
             # Analyze button
@@ -199,17 +185,17 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
 
     # Callback to handle "Show More" button
     def show_more_callback():
-        st.session_state.click_count += 1  # add to click count
+        st.session_state.click_count += 1  # Add to click count
 
         if st.session_state.click_count == 1:
-            st.session_state.rows_to_display += 5  # add 5 rows after first click
+            st.session_state.rows_to_display += 5  # Add 5 rows after first click
         elif st.session_state.click_count == 2:
-            st.session_state.rows_to_display += 40  # add 40 rows adter second click
+            st.session_state.rows_to_display += 40  # Add 40 rows adter second click
         else:
-            st.session_state.rows_to_display += 50  # add 50 rows after
+            st.session_state.rows_to_display += 50  # Add 50 rows after
 
     # Create a two-column layout for buttons
-    col1, col2 = st.columns([4, 2])  # Equal width columns
+    col1, col2 = st.columns([4, 2]) 
 
     # Show the "Show More" button only if there are more rows to display
     with col1:

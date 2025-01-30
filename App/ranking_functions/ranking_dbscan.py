@@ -1,21 +1,9 @@
-from sklearn.cluster import DBSCAN
-import pandas as pd
 import numpy as np
+import pandas as pd
+from sklearn.cluster import DBSCAN
+
 
 def get_dbscan_ranking(df, dmatrix):
-    """
-    Computes a ranking table for collaborations using DBSCAN clustering
-    with shared clusters as the ranking criterion.
-
-    Parameters:
-    - df (pd.DataFrame): DataFrame with company and customer data. Must include 'name', 'lat', and 'lon'.
-    - dmatrix (pd.DataFrame): Precomputed distance matrix.
-    - eps (float): Epsilon parameter for DBSCAN (maximum distance for points to be in the same cluster).
-    - min_samples (int): Minimum number of samples in a neighborhood to form a cluster.
-
-    Returns:
-    - pd.DataFrame: A ranking table with columns ['Rank', 'Company A', 'Company B', 'Shared_Clusters'].
-    """
     # Find min samples and epsilon
     min_samples = recommend_minPts(len(df))
     eps = find_optimal_epsilon(dmatrix, min_samples)
@@ -29,7 +17,7 @@ def get_dbscan_ranking(df, dmatrix):
 
     # Calculate shared clusters between companies
     partnership_scores = []
-    company_names = df['name'].unique()  # Extract unique company names
+    company_names = df['name'].unique()  # Get unique company names
 
     for i, company1 in enumerate(company_names):
         for j, company2 in enumerate(company_names):
@@ -41,7 +29,6 @@ def get_dbscan_ranking(df, dmatrix):
                 # Count shared clusters, ignoring noise (-1)
                 shared_clusters = len(clusters1.intersection(clusters2) - {-1})
 
-                # Append the result
                 partnership_scores.append({
                     'Company A': company1,
                     'Company B': company2,
@@ -61,16 +48,6 @@ def get_dbscan_ranking(df, dmatrix):
     return partnership_df[['Rank', 'Company A', 'Company B', 'Score']]
 
 def recommend_minPts(dataset_size, dimensions=2):
-    """
-    Recommends an appropriate minPts value for DBSCAN based on dataset size and dimensions.
-    
-    Parameters:
-    - dataset_size (int): Number of points in the dataset.
-    - dimensions (int): Number of dimensions of the data (default is 2 for 2D data).
-    
-    Returns:
-    - int: Recommended minPts value.
-    """
     if dataset_size < 100:
         return max(4, dimensions + 1)  # Small datasets: Use the rule of thumb
     elif dataset_size < 1000:
@@ -79,12 +56,11 @@ def recommend_minPts(dataset_size, dimensions=2):
         return max(10, dimensions + 1)  # Large datasets: Higher minPts for noise filtering
 
 def find_optimal_epsilon(dist_matrix, minPts):
-    # Step 1: Compute k-distances
+    # K-distances
     k = minPts - 1
     k_distances = np.sort(np.partition(dist_matrix, k, axis=1)[:, k])
 
-    # Step 2: Find the point of maximum curvature
-    # Line from the first point to the last point
+    # Find elbow point
     start_point = np.array([0, k_distances[0]])
     end_point = np.array([len(k_distances) - 1, k_distances[-1]])
 

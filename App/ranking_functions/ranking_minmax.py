@@ -1,32 +1,14 @@
 import pandas as pd
 
-# import sys
-# import os
-# # Load your custom functions
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-# from dss import load_data
-# from distancematrix import distance_matrix
-
 def get_min_max_ranking(dmatrix, df):
-    """
-    Computes a ranking table for collaborations using the min-max method.
-    
-    Parameters:
-    - dmatrix (pd.DataFrame): The distance matrix.
-    - df (pd.DataFrame): DataFrame with company and customer data.
-
-    Returns:
-    - pd.DataFrame: A ranking table with columns ['Rank', 'Company A', 'Company B', 'Min_Max_Score'].
-    """
     partnership_scores = []
-    company_names = df['name'].unique()  # Extract unique company names
+    company_names = df['name'].unique()  # Get unique company names
 
     # Iterate through all unique pairs of companies
     for i, company1 in enumerate(company_names):
         for j, company2 in enumerate(company_names):
             if i < j:  # Ensure each pair is only processed once
 
-                # Get customer indices for both companies
                 customers1 = df[df['name'] == company1].index.tolist()
                 customers2 = df[df['name'] == company2].index.tolist()
 
@@ -35,21 +17,19 @@ def get_min_max_ranking(dmatrix, df):
 
                 # Max depot distance
                 max_depot_distance = max(
-                    dmatrix.iloc[customers1, 0].max(),  # Depot assumed to be the first row/column
+                    dmatrix.iloc[customers1, 0].max(),  
                     dmatrix.iloc[customers2, 0].max()
                 )
 
                 # Calculate min-max score
                 min_max_score = max(max_inter_customer, max_depot_distance)
 
-                # Append the result, including company names
                 partnership_scores.append({
                     'Company A': company1,
                     'Company B': company2,
                     'Score': min_max_score
                 })
 
-    # Create the DataFrame
     partnership_df = pd.DataFrame(partnership_scores)
 
     # Sort by score
@@ -58,12 +38,4 @@ def get_min_max_ranking(dmatrix, df):
     # Ensure all rows are included and ranked, even with duplicate scores
     partnership_df['Rank'] = partnership_df.index + 1
 
-    # Reorder columns for clarity
     return partnership_df[['Rank', 'Company A', 'Company B', 'Score']]
-
-
-# df = load_data('../Data/mini.csv')
-# dmatrix = distance_matrix(df)  # Precomputed distance matrix
-# ranking = get_min_max_ranking(dmatrix,df)
-# print("RANKING")
-# print(ranking)
