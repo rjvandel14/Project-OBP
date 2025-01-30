@@ -9,7 +9,7 @@ from routing import plot_routes_map
 def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, dmatrix):
     # Dropdowns for company selection
     unique_companies = sorted(data["name"].unique())
-    placeholder_companies = ["Select a company", *unique_companies]
+    placeholder_companies = ["Select or type", *unique_companies]
 
     col1, col2 = st.columns([2,1])
     with col1:
@@ -27,7 +27,7 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, d
 
     # Analyze collaboration
     if st.button(":violet[Analyze Collaboration]"):
-        if company_a == "Select a company" or company_b == "Select a company":
+        if company_a == "Select or type" or company_b == "Select or type":
             st.error("Please select valid companies for both dropdowns.")
         elif company_a == company_b:
             st.error("Please select two different companies.")
