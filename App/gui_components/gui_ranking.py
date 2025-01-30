@@ -153,6 +153,7 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
                 # If no results exist yet, show the spinner
                 if index not in st.session_state.results:
                     with st.spinner(f"Analyzing collaboration between {row['Company A']} and {row['Company B']}..."):
+                        timelimit = 10 + 0.5 * len(data[data['name'].isin([row['Company A'], row['Company B']])].copy())
                         results = all_cvrp(
                             vehicle_capacity,
                             cost_per_km,
@@ -161,7 +162,7 @@ def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_
                             row["Company B"],
                             data,
                             dmatrix,
-                            True,
+                            timelimit,
                         )
                         st.session_state.results[index] = results  # Save results persistently
                 

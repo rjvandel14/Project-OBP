@@ -43,7 +43,7 @@ def render_analysis(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, d
                 results = st.session_state.analysis_results[analysis_key]
 
             # Generate the map and CSV file
-            map, csv_file_path = plot_routes_map(data, depot_lat, depot_lon, company_a, company_b, results["Routes"][1], output_file='routes_map.html')
+            map, csv_file_path = plot_routes_map(data, depot_lat, depot_lon, company_a, company_b, results["Routes"][2], output_file='routes_map.html')
 
             # Store map and CSV path in session state
             st.session_state["map_html"] = map._repr_html_()
