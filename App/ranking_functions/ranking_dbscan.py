@@ -4,9 +4,9 @@ from sklearn.cluster import DBSCAN
 
 
 def get_dbscan_ranking(df, dmatrix):
-    # Find min samples and epsilon
-
     dmatrix = dmatrix.drop(index="Depot", columns="Depot", errors="ignore")
+    
+    # Find min samples and epsilon
     min_samples = recommend_minPts(len(df))
     eps = find_optimal_epsilon(dmatrix, min_samples)
 

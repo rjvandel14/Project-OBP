@@ -1,23 +1,8 @@
-# Partnership ranking methods
-
-# Implements ranking logic and scoring features like overlap and cost savings.
-# Validates rankings using heuristics and exact VRP results.
-
-# Role: Implements ranking logic.
-# Interactions:
-# With dss.py:
-# Provides ranking algorithms and outputs scores based on features like overlap and savings potential.
-# Ensures rankings are consistent with DSS results by validating with small VRP solutions.
-# With routing.py:
-# Compares rankings to exact VRP solutions for validation (top and bottom-ranked partnerships).
 import folium
 import pandas as pd
 import streamlit as st
-from dss import load_data
-from osrm_dmatrix import compute_distance_matrix
 from routing import all_cvrp
 from scipy.stats import spearmanr
-from ranking_functions.ranking_clustering import get_cluster_kmeans
 
 # Visualize the customer locations given a company
 def create_partnership_map(df, depot_lat, depot_lon, output_file='map.html'):
@@ -108,11 +93,3 @@ def get_validation(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, dm
     print(evaluation_df)
     print(f"\nSpearman Rank Correlation for Ranking: {spearman_corr_dbscan:.2f}")
     print(f"P-Value: {p_value_dbscan:.2e}")
-
-
-df = load_data('../Data/mini.csv')
-dmatrix = compute_distance_matrix(df)
-#rankingdbscan = get_dbscan_ranking(df, dmatrix.drop(index='Depot', columns='Depot')) 
-rankingclusterkmeans = get_cluster_kmeans(df, dmatrix)
-#rankingminmax = get_min_max_ranking(dmatrix, df)
-get_validation(10, 2.5, 50, df, dmatrix, rankingclusterkmeans)
