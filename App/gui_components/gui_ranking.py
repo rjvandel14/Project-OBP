@@ -1,11 +1,10 @@
 import pandas as pd
 import streamlit as st
 from routing import all_cvrp
-from ranking_functions.ranking_clustering import get_cluster_kmeans
-
+from ranking_functions.ranking_dbscan import get_dbscan_ranking
 
 def render_ranking(dmatrix, data, vehicle_capacity, cost_per_km, fixed_cost_per_truck):
-    ranking_data = get_cluster_kmeans(data, dmatrix)
+    ranking_data = get_dbscan_ranking(data, dmatrix)
 
     # Create two columns: one for the title and the other for the filter options
     col1, col2 = st.columns([2, 1]) 
