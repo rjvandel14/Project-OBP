@@ -40,7 +40,18 @@ def haversine_matrix(df):
 # ----------------- OSRM Functions -----------------
 
 def fetch_osrm_distances(batch, ref_batch, osrm_url, max_retries=3):
-    """Fetch distance matrix for a batch of coordinates using OSRM, with retries and a fallback to Haversine."""
+    """
+    Fetch a batch of distances from OSRM, with retries and fallback to Haversine distances if necessary.
+
+    Parameters:
+    - batch (pd.DataFrame): Batch of source locations.
+    - ref_batch (pd.DataFrame): Batch of destination locations.
+    - osrm_url (str): Base URL of the OSRM service.
+    - max_retries (int): Number of retry attempts in case of failure.
+
+    Returns:
+    - Distances matrix (list of lists) or None if unsuccessful.
+    """
     batch_coords = ';'.join(batch.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
     ref_coords = ';'.join(ref_batch.apply(lambda row: f"{row['lon']},{row['lat']}", axis=1))
 
@@ -82,7 +93,18 @@ def fetch_osrm_distances(batch, ref_batch, osrm_url, max_retries=3):
     return haversine_matrix(batch, ref_batch)
 
 def OSRM_full_matrix_parallel(data_input, batch_size, max_workers=4, osrm_url='http://localhost:5000'):
-    """Compute a full NxN distance matrix using OSRM with parallel requests."""
+    """
+    Compute a full distance matrix using OSRM with parallel requests.
+
+    Parameters:
+    - data_input (pd.DataFrame): DataFrame containing customer locations.
+    - batch_size (int): Number of locations per batch.
+    - max_workers (int): Number of parallel threads to use.
+    - osrm_url (str): URL of the OSRM service.
+
+    Returns:
+    - pd.DataFrame: Full distance matrix.
+    """
     depot_row = pd.DataFrame({'name': ['Depot'], 'lat': [depot_lat], 'lon': [depot_lon]})
     data_input = pd.concat([depot_row, data_input], ignore_index=True)
     data_input = data_input.reset_index(drop=True)

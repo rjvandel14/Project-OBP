@@ -1,79 +1,121 @@
 import folium
 import networkx as nx
 import pandas as pd
-import folium
 from vrpy import VehicleRoutingProblem
 import csv
 
-# Function to solve VRP for a given dataset
+# ----------------- VRP Solver Functions -----------------
+
 def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distance_matrix, timelimit):
-    # Create a directed graph
+    """
+    Solve the Vehicle Routing Problem (VRP) for the given dataset.
+
+    Parameters:
+    - data (pd.DataFrame): DataFrame containing customer locations.
+    - vehicle_capacity (int): Capacity of the vehicle in units.
+    - cost_per_km (float): Cost per kilometer for travel.
+    - fixed_cost_per_truck (float): Fixed cost per truck.
+    - distance_matrix (pd.DataFrame): Distance matrix between customers and the depot.
+    - timelimit (int): Maximum time limit for solving the VRP (in seconds).
+
+    Returns:
+    - (float, list): The cost of the optimal solution and the best routes.
+    """
+    # Create a directed graph representing the problem
     G = nx.DiGraph()
 
-    # Add "Source" and "Sink" nodes for the depot
+    # Add nodes for the depot (Source and Sink)
     G.add_node("Source", demand=0)
     G.add_node("Sink", demand=0)
 
-    # Add customer nodes
+    # Add customer nodes with a demand of 1 unit per customer
     for idx, row in data.iterrows():
-        G.add_node(idx, demand=1)  # Assuming demand of 1 for each customer
+        G.add_node(idx, demand=1)
 
-    # Add edges with costs (distances)
+    # Add edges representing distances and costs between customers
     for i, from_row in data.iterrows():
-        for j, to_row in data.iterrows():          
-            if i != j:  # No self-loops
-                distance = distance_matrix.iloc[i + 1, j + 1]  # +1 to account for the depot row/column
+        for j, to_row in data.iterrows():
+            if i != j:  # Avoid self-loops
+                distance = distance_matrix.iloc[i + 1, j + 1]  # Adjust for depot offset
                 G.add_edge(i, j, cost=distance * cost_per_km)
 
-        # Connect "Source" to all customer nodes
-        distance_from_depot = distance_matrix.iloc[0, i + 1]  # +1 for depot offset
+        # Connect the depot to customer nodes and vice versa
+        distance_from_depot = distance_matrix.iloc[0, i + 1]
         G.add_edge("Source", i, cost=distance_from_depot * cost_per_km)
 
-        # Connect all customer nodes to "Sink"
-        distance_to_depot = distance_matrix.iloc[i + 1, 0]  # +1 for customer index and 0 for depot row
+        distance_to_depot = distance_matrix.iloc[i + 1, 0]
         G.add_edge(i, "Sink", cost=distance_to_depot * cost_per_km)
 
-    # Solve VRP
+    # Set up and solve the VRP using the VRPy solver
     vrp = VehicleRoutingProblem(G)
     vrp.load_capacity = vehicle_capacity
     vrp.fixed_cost = fixed_cost_per_truck
-    vrp.solve(cspy=True, time_limit= timelimit)
+    vrp.solve(cspy=True, time_limit=timelimit)
 
     return vrp.best_value, vrp.best_routes
 
-def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, company_b, data, dmatrix, timelimit):
-     # Define companies to collaborate
-    collaborating_companies = (company_a, company_b)
 
+def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, company_b, data, dmatrix, timelimit):
+    """
+    Solve the VRP for individual companies and their collaboration.
+
+    Parameters:
+    - vehicle_capacity (int): Capacity of the vehicle.
+    - cost_per_km (float): Cost per kilometer.
+    - fixed_cost_per_truck (float): Fixed cost per truck.
+    - company_a, company_b (str): Names of the companies being analyzed.
+    - data (pd.DataFrame): Customer data for both companies.
+    - dmatrix (pd.DataFrame): Distance matrix.
+    - timelimit (int): Time limit for the VRP solver.
+
+    Returns:
+    - dict: Dictionary containing costs, routes, and comparison results.
+    """
+    # Select data for the individual companies
     company1_data = data.loc[data['name'] == company_a].copy()
     company2_data = data.loc[data['name'] == company_b].copy()
 
-    # Combine data for collaborating companies
-    if collaborating_companies:
-        collaboration_data = data[data['name'].isin(collaborating_companies)].copy()
-        collaboration_data['name'] = "Collaboration"  # Label as one entity
-        data = pd.concat([data[~data['name'].isin(collaborating_companies)], collaboration_data])
+    # Combine data for collaboration scenario
+    collaboration_data = data[data['name'].isin([company_a, company_b])].copy()
+    collaboration_data['name'] = "Collaboration"
 
-    # Solve VRP for individual companies    
+    # Solve VRP for individual companies
     cost_a, route_a = solve_vrp(company1_data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, dmatrix, timelimit)
     cost_b, route_b = solve_vrp(company2_data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, dmatrix, timelimit)
 
-    # Solve VRP for combined companies
+    # Solve VRP for the combined companies
     combined_cost, route_combined = solve_vrp(collaboration_data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, dmatrix, timelimit)
 
+    # Create result dictionary
     result = {
-    "Scenario": [company_a, company_b, "Collaboration"],
-    "Total Cost": [round(cost_a,2), round(cost_b,2), round(combined_cost,2)],
-    "Truck Cost": [len(route_a) * fixed_cost_per_truck, len(route_b) * fixed_cost_per_truck, len(route_combined) * fixed_cost_per_truck],
-    "Driving Cost": [round(cost_a,2) - len(route_a) * fixed_cost_per_truck, round(cost_b,2) - len(route_b) * fixed_cost_per_truck, round(combined_cost,2) - len(route_combined) * fixed_cost_per_truck],
-    "Routes": [route_a, route_b, route_combined]
+        "Scenario": [company_a, company_b, "Collaboration"],
+        "Total Cost": [round(cost_a, 2), round(cost_b, 2), round(combined_cost, 2)],
+        "Truck Cost": [len(route_a) * fixed_cost_per_truck, len(route_b) * fixed_cost_per_truck, len(route_combined) * fixed_cost_per_truck],
+        "Driving Cost": [round(cost_a, 2) - len(route_a) * fixed_cost_per_truck, round(cost_b, 2) - len(route_b) * fixed_cost_per_truck, round(combined_cost, 2) - len(route_combined) * fixed_cost_per_truck],
+        "Routes": [route_a, route_b, route_combined]
     }
 
     return result
 
-# Plots a map with the CVRP routes and generates JSON data with customer numbers
+# ----------------- Route Visualization -----------------
+
 def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes=None, output_file='map.html', csv_file='routes.csv'):
-    # Create a Folium map centered at the depot
+    """
+    Plot the CVRP routes on an interactive map and export route details to a CSV file.
+
+    Parameters:
+    - df (pd.DataFrame): DataFrame containing customer locations.
+    - depot_lat, depot_lon (float): Latitude and longitude of the depot.
+    - company_a, company_b (str): Names of the companies being visualized.
+    - routes (dict, optional): Dictionary of routes from the VRP solution.
+    - output_file (str): Name of the HTML file to save the map.
+    - csv_file (str): Name of the CSV file to export route details.
+
+    Returns:
+    - folium.Map: The interactive map with plotted routes.
+    - str: Name of the CSV file with route details.
+    """
+    # Initialize the map centered at the depot
     m = folium.Map(location=[depot_lat, depot_lon], zoom_start=7)
 
     # Add the depot marker
@@ -83,75 +125,36 @@ def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes=None,
         icon=folium.Icon(color="red", icon="info-sign")
     ).add_to(m)
 
-    # Filter the dataframe for the two selected companies
+    # Filter customer data for the selected companies
     filtered_df = df[df['name'].isin([company_a, company_b])]
 
-    # Assign a unique color for each company in the selected companies
-    colors = ['blue', 'green', 'purple', 'orange', 'darkred', 'darkblue', 'cadetblue', 'lightgreen']  # Add more if needed
-    color_map = {company_a: colors[0], company_b: colors[1]}  # Assign colors to the two companies
+    # Assign unique colors to the companies
+    colors = ['blue', 'green']
+    color_map = {company_a: colors[0], company_b: colors[1]}
 
-    # Add customer markers for the selected companies
+    # Plot customer markers
     for idx, row in filtered_df.iterrows():
-        # Determine customer number
-        company_name = row['name']
-        customer_number = list(filtered_df[filtered_df['name'] == company_name].index).index(idx) + 1
-
-        # Add marker for customers
+        customer_number = list(filtered_df[filtered_df['name'] == row['name']].index).index(idx) + 1
         folium.Marker(
             location=[row['lat'], row['lon']],
-            popup=f"{company_name} {customer_number}",  # Shows company name and number in popup
-            icon=folium.Icon(color=color_map[company_name])
+            popup=f"{row['name']} {customer_number}",
+            icon=folium.Icon(color=color_map[row['name']])
         ).add_to(m)
 
-    # Prepare CSV data
+    # Plot routes and export details to a CSV file
     csv_data = []
-
     if routes:
         for route_id, route in routes.items():
-            # Loop through the route and get details for each customer (except 'Source' and 'Sink')
-            for customer_index in route[1:-1]:
-                customer_row = df.iloc[customer_index]
-                company_name = customer_row['name']
-
-                # Generate label as "Company N"
-                customer_number = list(filtered_df[filtered_df['name'] == company_name].index).index(customer_index) + 1
-
-                # Append the data to the CSV output
-                csv_data.append({
-                    "route_id": route_id,
-                    "company": company_name,
-                    "customer_number": customer_number,
-                })
-
-            # Add lines to the map for visualization
-            route_coords = [
-                (df.iloc[customer_index]['lat'], df.iloc[customer_index]['lon']) 
-                for customer_index in route[1:-1]
-            ]
+            route_coords = [(df.iloc[customer_index]['lat'], df.iloc[customer_index]['lon']) for customer_index in route[1:-1]]
             folium.PolyLine(route_coords, color="blue", weight=2.5, opacity=1).add_to(m)
 
-            # Add line from the first customer location to the depot
-            first_customer_index = route[1]
-            first_customer_row = df.iloc[first_customer_index]
-            folium.PolyLine(
-                locations=[(first_customer_row['lat'], first_customer_row['lon']),
-                           (depot_lat, depot_lon)],
-                color="blue", weight=2.5, opacity=1
-            ).add_to(m)
+            # Prepare CSV data
+            for customer_index in route[1:-1]:
+                customer_row = df.iloc[customer_index]
+                csv_data.append({"route_id": route_id, "company": customer_row['name'], "customer_number": customer_index + 1})
 
-            # Add line from the last customer location to the depot
-            last_customer_index = route[-2]
-            last_customer_row = df.iloc[last_customer_index]
-            folium.PolyLine(
-                locations=[(last_customer_row['lat'], last_customer_row['lon']),
-                           (depot_lat, depot_lon)],
-                color="blue", weight=2.5, opacity=1
-            ).add_to(m)
-
-    # Save the map to an HTML file
+    # Save map and CSV
     m.save(output_file)
-
-    # Export routes to a CSV file
     with open(csv_file, mode='w', newline='') as f:
         writer = csv.DictWriter(f, fieldnames=["route_id", "company", "customer_number"])
         writer.writeheader()

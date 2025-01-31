@@ -4,44 +4,45 @@ import streamlit as st
 from routing import all_cvrp
 from scipy.stats import spearmanr
 
-# Visualize the customer locations given a company
+# ----------------- Visualization Function -----------------
+
 def create_partnership_map(df, depot_lat, depot_lon, output_file='map.html'):
     """
-    Create an interactive map showing company customer locations and depot.
+    Create an interactive map displaying customer locations and the depot for visualizing partnerships.
 
     Parameters:
-    - df (pd.DataFrame): DataFrame containing customer data with columns ['latitude', 'longitude', 'name'].
+    - df (pd.DataFrame): DataFrame containing columns ['latitude', 'longitude', 'name'] representing customers.
     - depot_lat (float): Latitude of the depot.
     - depot_lon (float): Longitude of the depot.
     - output_file (str): Name of the HTML file to save the map.
 
     Returns:
-    - folium.Map: The interactive Folium map object.
+    - folium.Map: Interactive map object showing customers and depot locations.
     """
-    # Create a Folium map centered at the depot
+    # Initialize a Folium map centered at the depot
     m = folium.Map(location=[depot_lat, depot_lon], zoom_start=12)
 
-    # Add the depot marker
+    # Add a marker for the depot location
     folium.Marker(
         location=[depot_lat, depot_lon],
         popup="Depot",
         icon=folium.Icon(color="red", icon="info-sign")
     ).add_to(m)
 
-    # Assign a unique color for each company
-    company_names = df['name'].unique()  # Use the 'name' column to identify companies
-    colors = ['blue', 'green', 'purple', 'orange', 'darkred', 'darkblue', 'cadetblue', 'lightgreen']  # Add more if needed
+    # Assign a unique color to each company for differentiation
+    company_names = df['name'].unique()
+    colors = ['blue', 'green', 'purple', 'orange', 'darkred', 'darkblue', 'cadetblue', 'lightgreen']  # Expand as needed
     color_map = {name: colors[i % len(colors)] for i, name in enumerate(company_names)}
 
-    # Add customer markers for each company
+    # Add markers for each customer's location
     for _, row in df.iterrows():
         folium.Marker(
             location=[row['latitude'], row['longitude']],
-            popup=f"Customer of {row['name']}",  # Display company name in the popup
+            popup=f"Customer of {row['name']}",  # Display company name in the marker popup
             icon=folium.Icon(color=color_map[row['name']])
         ).add_to(m)
 
-    # Save the map to an HTML file
+    # Save the map to an HTML file and display it on Streamlit
     m.save(output_file)
 
     # Streamlit output
@@ -51,15 +52,34 @@ def create_partnership_map(df, depot_lat, depot_lon, output_file='map.html'):
 
     return m
 
+# ----------------- Validation Function -----------------
+
 def get_validation(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, dmatrix, ranking):
+    """
+    Validate the heuristic ranking by evaluating the VRP for the top 3 and bottom 3 pairs.
+
+    Parameters:
+    - vehicle_capacity (int): Capacity of the vehicle in units.
+    - cost_per_km (float): Cost per kilometer for travel.
+    - fixed_cost_per_truck (float): Fixed cost per truck.
+    - data (pd.DataFrame): DataFrame containing company and customer data.
+    - dmatrix (pd.DataFrame): Distance matrix for the customers.
+    - ranking (pd.DataFrame): DataFrame containing ranked pairs of companies.
+
+    Returns:
+    - None: Prints evaluation results and Spearman Rank Correlation.
+    """
+    # Select the top 3 and bottom 3 company pairs from the ranking
     selected_pairs = pd.concat([ranking.head(3), ranking.tail(3)])
-    # Evaluate VRP for selected pairs
-    evaluation_results = []
+
+    evaluation_results = []  # List to store evaluation details
+
+    # Evaluate each selected pair using VRP
     for _, row in selected_pairs.iterrows():
         company_a = row["Company A"]
         company_b = row["Company B"]
-        
-        # Solve VRP for the selected companies using all_cvrp
+
+        # Solve the VRP for the selected pair of companies
         vrp_result = all_cvrp(
             vehicle_capacity,
             cost_per_km,
@@ -67,28 +87,27 @@ def get_validation(vehicle_capacity, cost_per_km, fixed_cost_per_truck, data, dm
             company_a,
             company_b,
             data,
-            dmatrix 
+            dmatrix
         )
 
-        # Append results
+        # Calculate collaboration cost savings and store the results
         evaluation_results.append({
             "Company A": company_a,
             "Company B": company_b,
             "Heuristic Rank": row["Rank"],
             "Score": row["Score"],
-            "VRP Collaboration Saving Cost": vrp_result["Total Cost"][0] + vrp_result["Total Cost"][1] - vrp_result["Total Cost"][2]  # Cost savings
+            "VRP Collaboration Saving Cost": vrp_result["Total Cost"][0] + vrp_result["Total Cost"][1] - vrp_result["Total Cost"][2]
         })
 
-    # Create DataFrame with results
+    # Create a DataFrame to store evaluation results
     evaluation_df = pd.DataFrame(evaluation_results)
-    
-    # Compute Spearman Rank Correlation for K-Means rankings
+
+    # Calculate Spearman Rank Correlation between heuristic scores and VRP results
     heuristic_scores = evaluation_df["Score"]
     vrp_scores = evaluation_df["VRP Collaboration Saving Cost"]
-
     spearman_corr_dbscan, p_value_dbscan = spearmanr(heuristic_scores, vrp_scores)
 
-    # Display results
+    # Display evaluation results
     print("Evaluation Results (Top 3 and Bottom 3) for Ranking:")
     print(evaluation_df)
     print(f"\nSpearman Rank Correlation for Ranking: {spearman_corr_dbscan:.2f}")
