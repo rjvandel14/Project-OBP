@@ -24,9 +24,17 @@ cd <repository-directory>
 
 ### 2. Install Python Dependencies
 
+It’s recommended to create a virtual environment to avoid conflicts with system-level Python packages.
 Use the `requirements.txt` file to install required Python packages:
 
 ```bash
+# Create a virtual environment
+python -m venv env
+
+# Activate the virtual environment
+source env/bin/activate  # On Windows: .\env\Scripts\activate
+
+# Install the required dependencies
 pip install -r requirements.txt
 ```
 
@@ -54,7 +62,7 @@ pip install -r requirements.txt
    osrm-customize /path/to/map.osrm
    ```
 
-4. Place all these files in the data/ directory inside the app folder.
+3. Place all these files in the data/ directory inside the app folder.
 
 ---
 
@@ -106,7 +114,7 @@ streamlit run gui.py
 
 1. **OSRM Fails to Start**:
 
-   - Ensure the `.osrm` files are correctly placed in `osrm_data/`.
+   - Ensure the `.osrm` files are correctly placed in `data/`.
    - Check that Docker is running.
 
 2. **Rate Limits with Public OSRM**:
@@ -119,16 +127,5 @@ streamlit run gui.py
 
 ---
 
-## Contributing
 
-1. Fork the repository.
-2. Create a feature branch.
-3. Commit your changes.
-4. Submit a pull request.
-
----
-
-## License
-
-This project is licensed under the MIT License. See the `LICENSE` file for details.
 
