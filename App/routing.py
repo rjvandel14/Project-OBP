@@ -1,16 +1,3 @@
-# Vehicle routing and distance calculations
-
-# Solves VRPs for individual and collaborative scenarios.
-# Outputs route costs, distances, and truck requirements.
-
-# Role: Solves VRPs for cost and route optimization.
-# Interactions:
-# With dss.py:
-# Provides VRP solutions (costs, routes, truck usage) for individual companies or collaborations.
-# Supports cost/savings calculations for DSS analysis.
-# With ranking.py:
-# Validates rankings by solving VRPs for selected partnerships.
-# Provides ground truth for heuristic ranking evaluations.
 import folium
 import networkx as nx
 import pandas as pd
@@ -18,8 +5,22 @@ import folium
 from vrpy import VehicleRoutingProblem
 import csv
 
-# Function to solve VRP for a given dataset
 def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distance_matrix, timelimit):
+    """
+    Solve the Vehicle Routing Problem (VRP) for a given dataset of customer locations.
+
+    Parameters:
+    - data (pd.DataFrame): DataFrame containing customer details.
+    - vehicle_capacity (int): Capacity of each vehicle (in units).
+    - cost_per_km (float): Cost per kilometer for travel.
+    - fixed_cost_per_truck (float): Fixed cost per truck.
+    - distance_matrix (pd.DataFrame): Matrix with distances between customers and the depot.
+    - timelimit (int): Time limit for solving the VRP (in seconds).
+
+    Returns:
+    - (float, list): The cost of the optimal solution and the corresponding routes.
+    """
+    
     # Create a directed graph
     G = nx.DiGraph()
 
@@ -55,7 +56,23 @@ def solve_vrp(data, vehicle_capacity, cost_per_km, fixed_cost_per_truck, distanc
     return vrp.best_value, vrp.best_routes
 
 def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, company_b, data, dmatrix, timelimit):
-     # Define companies to collaborate
+    """
+    Solve the VRP for individual companies and their collaboration scenario.
+
+    Parameters:
+    - vehicle_capacity (int): Vehicle capacity.
+    - cost_per_km (float): Cost per kilometer of travel.
+    - fixed_cost_per_truck (float): Fixed cost associated with each truck.
+    - company_a, company_b (str): Names of the companies being analyzed.
+    - data (pd.DataFrame): DataFrame containing customer locations and their respective companies.
+    - dmatrix (pd.DataFrame): Distance matrix with distances between locations.
+    - timelimit (int): Time limit for solving the VRP (in seconds).
+
+    Returns:
+    - dict: Results with costs, truck requirements, driving costs, and routes.
+    """
+    
+    # Define companies to collaborate
     collaborating_companies = (company_a, company_b)
 
     company1_data = data.loc[data['name'] == company_a].copy()
@@ -84,8 +101,23 @@ def all_cvrp(vehicle_capacity, cost_per_km, fixed_cost_per_truck, company_a, com
 
     return result
 
-# Plots a map with the CVRP routes and generates JSON data with customer numbers
+
 def plot_routes_map(df, depot_lat, depot_lon, company_a, company_b, routes=None, output_file='map.html', csv_file='routes.csv'):
+    """
+    Plot the VRP routes on an interactive map and export route details to a CSV.
+
+    Parameters:
+    - df (pd.DataFrame): DataFrame containing customer locations.
+    - depot_lat, depot_lon (float): Latitude and longitude of the depot.
+    - company_a, company_b (str): Companies whose routes are being visualized.
+    - routes (dict, optional): Routes from the VRP solution.
+    - output_file (str): Name of the HTML file to save the map.
+    - csv_file (str): Name of the CSV file to save route data.
+
+    Returns:
+    - (folium.Map, str): The generated map and path to the CSV file.
+    """
+    
     # Create a Folium map centered at the depot
     m = folium.Map(location=[depot_lat, depot_lon], zoom_start=7)
 
